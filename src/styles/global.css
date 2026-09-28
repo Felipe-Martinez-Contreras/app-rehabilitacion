@@ -1,0 +1,257 @@
+/*
+ * Paleta (contraste medido sobre el fondo crema #FAF7F2):
+ *   texto carbón #2B2D42 → 12,6:1 · salvia #3F6B5A → 5,7:1 (texto blanco sobre salvia 6,1:1)
+ *   lavanda #8B7FC7 → 3,3:1: solo bordes, íconos y trazos; para texto se usa #6B5FAF (5,1:1)
+ *   durazno #F2B89B → 1,6:1: solo relleno decorativo, con borde #C4704A (3,4:1)
+ */
+:root {
+  --fondo: #faf7f2;
+  --superficie: #ffffff;
+  --texto: #2b2d42;
+  --texto-suave: #4a4c63;
+  --primario: #3f6b5a;
+  --primario-hover: #335849;
+  --sobre-primario: #ffffff;
+  --acento: #8b7fc7;
+  --acento-texto: #6b5faf;
+  --flor: #f2b89b;
+  --flor-borde: #c4704a;
+  --borde: #8a8c9e;
+  --foco: #2b2d42;
+
+  --trazo-linea: #8b7fc7;
+  --trazo-contorno: #ffffff;
+  --trazo-punto: #f2b89b;
+
+  --radio: 0.75rem;
+  --espacio: 1rem;
+
+  color-scheme: light;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 100%;
+  line-height: 1.5;
+  color: var(--texto);
+  background: var(--fondo);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 0;
+  background: var(--fondo);
+  overflow-wrap: break-word;
+}
+
+h1,
+h2 {
+  line-height: 1.25;
+  margin: 0 0 0.75rem;
+}
+
+h1 {
+  font-size: 1.75rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+}
+
+h1:focus {
+  outline: none;
+}
+
+h1:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 4px;
+}
+
+p {
+  margin: 0 0 1rem;
+}
+
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 3px;
+}
+
+/* Estructura */
+.app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem var(--espacio);
+  border-bottom: 1px solid var(--borde);
+}
+
+.encabezado p {
+  margin: 0;
+}
+
+.encabezado__nombre {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--primario);
+}
+
+.encabezado__fase {
+  color: var(--texto-suave);
+}
+
+.principal {
+  flex: 1;
+  width: 100%;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: var(--espacio);
+}
+
+.pie {
+  position: sticky;
+  bottom: 0;
+  padding: 0.5rem var(--espacio);
+  background: var(--superficie);
+  border-top: 1px solid var(--borde);
+  font-size: 0.875rem;
+}
+
+.pie p {
+  max-width: 60rem;
+  margin: 0 auto;
+}
+
+/* Pantallas */
+.pantalla {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.destacado {
+  font-size: 1.125rem;
+  padding: 1rem;
+  background: var(--superficie);
+  border-left: 4px solid var(--acento);
+  border-radius: var(--radio);
+}
+
+.consejos {
+  margin: 0 0 1.5rem;
+  padding-left: 1.25rem;
+}
+
+.consejos li + li {
+  margin-top: 0.25rem;
+}
+
+/* Botones: mínimo 48 × 48 px, siempre con texto visible */
+.boton {
+  min-height: 3rem;
+  min-width: 3rem;
+  padding: 0.75rem 1.5rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--sobre-primario);
+  background: var(--primario);
+  border: 2px solid var(--primario);
+  border-radius: var(--radio);
+  cursor: pointer;
+}
+
+.boton:hover {
+  background: var(--primario-hover);
+}
+
+.boton--secundario {
+  color: var(--primario);
+  background: var(--superficie);
+}
+
+.boton--secundario:hover {
+  background: var(--fondo);
+}
+
+/* Cámara */
+.indicador-camara {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.indicador-camara__texto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.indicador-camara__icono {
+  width: 1rem;
+  height: 1rem;
+  fill: var(--primario);
+}
+
+.camara {
+  width: 100%;
+  max-width: 40rem;
+  border-radius: var(--radio);
+  overflow: hidden;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+}
+
+/* Video y trazo se espejan juntos; los textos quedan fuera. */
+.camara__espejo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  transform: scaleX(-1);
+}
+
+.camara__video,
+.camara__trazo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.aviso-mano {
+  min-height: 1.5em;
+  margin-top: 0.75rem;
+  font-size: 1.125rem;
+}
+
+/* Depuración (?debug=1) */
+.depuracion {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--superficie);
+  border: 1px dashed var(--borde);
+  border-radius: var(--radio);
+}
+
+.depuracion pre {
+  margin: 0;
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+}

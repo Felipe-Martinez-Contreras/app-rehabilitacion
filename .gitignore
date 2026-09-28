@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.local
+*.log
+.DS_Store
+
+# Se genera en cada dev/build desde node_modules (scripts/copiar-wasm.mjs)
+public/wasm/
