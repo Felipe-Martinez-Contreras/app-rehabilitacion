@@ -250,6 +250,13 @@ p {
   border-radius: var(--radio);
 }
 
+.depuracion__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
 .depuracion pre {
   margin: 0;
   font-size: 0.875rem;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aPixeles, distancia3D, tamanoPalma } from './geometry';
+import { anguloEn, aPixeles, distancia3D, tamanoPalma } from './geometry';
 import { manoSintetica } from './manoSintetica';
 
 describe('aPixeles', () => {
@@ -12,6 +12,22 @@ describe('aPixeles', () => {
 describe('distancia3D', () => {
   it('usa las tres coordenadas', () => {
     expect(distancia3D({ x: 0, y: 0, z: 0 }, { x: 3, y: 4, z: 12 })).toBe(13);
+  });
+});
+
+describe('anguloEn', () => {
+  const o = { x: 0, y: 0, z: 0 };
+  it('mide 180° en línea recta y 90° en ángulo recto', () => {
+    expect(anguloEn({ x: -1, y: 0, z: 0 }, o, { x: 2, y: 0, z: 0 })).toBeCloseTo(180);
+    expect(anguloEn({ x: 1, y: 0, z: 0 }, o, { x: 0, y: 0, z: 3 })).toBeCloseTo(90);
+  });
+
+  it('usa la profundidad (z)', () => {
+    expect(anguloEn({ x: 0, y: 1, z: 0 }, o, { x: 0, y: -1, z: -1 })).toBeCloseTo(135);
+  });
+
+  it('devuelve 180° si un segmento mide cero', () => {
+    expect(anguloEn(o, o, { x: 1, y: 0, z: 0 })).toBe(180);
   });
 });
 

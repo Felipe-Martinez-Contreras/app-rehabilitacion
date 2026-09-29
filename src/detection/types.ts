@@ -10,3 +10,18 @@ export type Landmarks = readonly Punto3D[];
 
 /** Dedos que el pulgar puede tocar, en el orden del piano. */
 export type Dedo = 'indice' | 'medio' | 'anular' | 'menique';
+
+/** Rango cómodo medido en la calibración (solo números; se guarda en mqs:calibracion). */
+export interface Calibracion {
+  aperturaMin: number;
+  aperturaMax: number;
+  separacionMax: number;
+  /** Signo de la normal de la palma (componente z) cuando la persona muestra la palma. */
+  signoPalma: 1 | -1;
+}
+
+/**
+ * Orientación de la mano respecto de la cámara. Sin calibración no se puede
+ * distinguir palma de dorso, así que se informa 'de-frente'.
+ */
+export type Orientacion = 'palma' | 'dorso' | 'de-frente' | 'de-canto';

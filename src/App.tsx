@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useCamera } from './camera/useCamera';
+import { DEPURAR } from './depuracion';
 import { PantallaTeVeo } from './screens/PantallaTeVeo';
 import { PantallaTuCamara } from './screens/PantallaTuCamara';
 
 type Pantalla = 'tu-camara' | 'te-veo';
-
-const DEPURAR = new URLSearchParams(window.location.search).get('debug') === '1';
 
 export function App() {
   const [pantalla, setPantalla] = useState<Pantalla>('tu-camara');

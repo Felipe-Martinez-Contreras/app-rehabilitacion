@@ -24,7 +24,12 @@ App web terapéutica (Vite + React + TypeScript) que usa la cámara para reconoc
 
 ## Detección
 - Lógica de detección y conteo en funciones puras en `src/detection/` (sin DOM ni React). Todos los umbrales en `src/detection/config.ts`, comentados.
-- Landmarks a píxeles antes de medir (x·ancho, y·alto, z·ancho); métricas divididas por el tamaño de la palma (0 → 9); media móvil exponencial + histéresis con 3 fotogramas de confirmación.
+- Landmarks a píxeles antes de medir (x·ancho, y·alto, z·ancho); métricas divididas por el tamaño de la palma (0 → 9); media móvil exponencial + histéresis.
+- Decisiones tomadas con mediciones reales (ya incorporadas en la especificación; valores medidos en `src/detection/config.ts`):
+  - Los cambios de estado se confirman por tiempo (150 ms), no por número de fotogramas, porque los fps varían entre 29 y 60.
+  - La apertura por distancias es la métrica principal de la flor y el filtro de toques (60 % del rango calibrado; 1,40 sin calibrar). La flexión por ángulos tiene saltos: solo es informativa.
+  - Al detectar la mano se ignoran los primeros 300 ms; al perderla se reinicia el estado del toque y de los contadores en curso.
+  - Toques y repeticiones solo cuentan con la palma de frente (normal con 0, 5 y 17; signo de la palma registrado en la calibración).
 - No usar la etiqueta izquierda/derecha. Video y canvas se espejan juntos; los textos nunca.
 - No re-renderizar React por fotograma: canvas y panel por refs; el estado cambia solo en eventos.
 - Panel de depuración solo con `?debug=1`.

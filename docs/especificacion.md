@@ -59,7 +59,7 @@ Construye desde cero una app web terapéutica de salud física para un seminario
 
 ## 6. Stack y restricciones técnicas
 - Vite + React + TypeScript. Sin backend, base de datos, login, analítica ni cookies. Sin librería de rutas: las pantallas se manejan con estado.
-- Dependencias de producción: solo `react`, `react-dom` y `@mediapipe/tasks-vision` (versión fijada). Es la única librería extra y se justifica porque la cámara es obligatoria. Vitest se permite solo como dependencia de desarrollo.
+- Dependencias de producción: solo `react`, `react-dom` y `@mediapipe/tasks-vision` (versión fijada: 0.10.35, porque la 1.x envía métricas de uso a Google; ver CLAUDE.md antes de actualizarla). Es la única librería extra y se justifica porque la cámara es obligatoria. Vitest se permite solo como dependencia de desarrollo.
 - Ningún recurso se carga desde servidores externos en tiempo de ejecución (ni CDN, ni Google Fonts, ni íconos remotos):
   - Descarga una vez el modelo `hand_landmarker.task` (float16) desde la fuente oficial de MediaPipe, guárdalo en `public/models/` y súbelo al repositorio.
   - Copia los archivos de `node_modules/@mediapipe/tasks-vision/wasm` a `public/wasm/` con un script de Node sin dependencias, ejecutado en `predev` y `prebuild`.
@@ -75,12 +75,15 @@ Construye desde cero una app web terapéutica de salud física para un seminario
 - No uses la etiqueta izquierda/derecha en la lógica, porque su valor depende de si la imagen está espejada.
 - Antes de medir distancias, pasa los landmarks a píxeles (x·ancho, y·alto, z·ancho), porque x e y vienen normalizados con escalas distintas.
 - Divide cada métrica por el tamaño de la palma (distancia muñeca 0 → base del dedo medio 9) para que no dependa de la distancia a la cámara.
-- Suaviza las métricas con una media móvil exponencial y usa histéresis: un umbral para entrar a un estado, otro para salir y al menos 3 fotogramas seguidos antes de confirmar un cambio. Así no se cuentan repeticiones dobles.
+- Suaviza las métricas con una media móvil exponencial y usa histéresis: un umbral para entrar a un estado, otro para salir y una condición que se mantenga al menos 150 ms seguidos antes de confirmar un cambio. Se confirma por tiempo y no por número de fotogramas, porque los fps varían (se midieron entre 29 y 60). Así no se cuentan repeticiones dobles.
+- Al detectar la mano, ignora los primeros 300 ms (al entrar al cuadro los puntos llegan deformados). Al perderla, reinicia el estado del toque y de los contadores en curso.
+- Orientación: calcula la normal de la palma con la muñeca (0), la base del índice (5) y la base del meñique (17), y usa su componente z normalizada. Si |z| < 0,5 la mano está de canto; si no, el signo indica palma o dorso. Toques y repeticiones solo cuentan con la palma de frente: de canto o de dorso las métricas no son confiables (de canto, la apertura sube por la perspectiva). Si la mano gira, muestra con calma: "Cuando quieras, vuelve a mostrar la palma a la cámara".
 - No re-renderices React en cada fotograma. El canvas y las animaciones se actualizan con refs o variables CSS; el estado de React cambia solo en eventos (repetición, cambio de fase, mano perdida).
 - Si la mano no se ve por más de 1,5 s, muestra "No alcanzo a ver tu mano. Puedes acercarla un poco, con la palma hacia la cámara" y pausa los temporizadores del ejercicio.
 - Métricas (todos los umbrales en un único archivo de configuración, comentado, para ajustarlos con pruebas reales):
-  - Apertura: promedio de la distancia de las puntas (8, 12, 16, 20) a la muñeca.
-  - Toque: distancia 3D de la punta del pulgar (4) a la punta más cercana de los otros dedos. Punto de partida: toque < 0,30 y soltar > 0,45. Para contar un toque nuevo, el pulgar debe haberse separado antes de todos los dedos.
+  - Apertura: promedio de la distancia de las puntas (8, 12, 16, 20) a la muñeca. Es la métrica principal de la flor y el filtro de los toques. Medido con la palma de frente: abierta ~1,82; puño 0,51–0,74.
+  - Flexión: 180° menos el ángulo de cada dedo en su articulación media (MCP-PIP-DIP). Solo informativa en el panel de depuración: tiene saltos momentáneos y no sirve como filtro.
+  - Toque: distancia 3D de la punta del pulgar (4) a la punta más cercana de los otros dedos. Toque < 0,33 y soltar > 0,45 (con 0,30 el anular oscilaba). Para contar un toque nuevo, el pulgar debe haberse separado antes de todos los dedos. Un toque solo puede empezar si la apertura supera el 60 % del rango calibrado (cerrada + 0,6 × (abierta − cerrada)); sin calibración, 1,40. Así el puño cerrado nunca cuenta como toque.
   - Separación: promedio de las distancias entre puntas vecinas (8–12, 12–16, 16–20).
 - Calibración del rango cómodo (fase 1): dos posturas sostenidas 3 s con anillo de progreso:
   - "Abre la mano y separa los dedos hasta donde te sea cómodo".
@@ -89,6 +92,9 @@ Construye desde cero una app web terapéutica de salud física para un seminario
   - Guarda la apertura mínima y máxima y la separación máxima.
   - Los umbrales de la flor y del abanico son porcentajes de ese rango personal (por ejemplo, en la flor: cerrada < 30 % y abierta > 70 %).
   - Si el rango medido es muy pequeño, usa valores conservadores por defecto y avísalo con calma.
+  - Registra el signo de z de "palma de frente" mientras la persona muestra la palma, sin usar la etiqueta izquierda/derecha (cada mano tiene el signo contrario).
+  - Registra también el |z| de palma que alcanza la persona. Quienes salen de un yeso de muñeca pueden tener limitado el giro: si |z| queda por debajo de 0,65, avísale con calma que puede acercar un poco la palma hacia la cámara, sin forzar el giro.
+  - El filtro de toques relativo al rango calibrado debe cuidar a quienes tengan menos apertura (con 1,40 fijo, el margen mínimo medido fue 0,14).
   - Se puede recalibrar desde Ajustes.
 - Toda la lógica de detección y conteo va en funciones puras en `src/detection/` (sin DOM ni React), para probarla con landmarks sintéticos.
 - Panel de depuración solo con `?debug=1`: métricas en vivo, umbrales, estado actual y fps.
@@ -118,6 +124,8 @@ Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que a
     - Mientras sostiene, un abanico SVG se despliega, avanza un temporizador circular y crece un acorde suave. Al completar, suena una campana.
     - Si suelta antes, el tiempo se pausa sin penalización y se retoma.
     - Juntar los dedos prepara la siguiente repetición.
+    - Umbrales (separación): "separados" al superar el 70 % del rango entre dedos juntos y la separación máxima calibrada; "juntos" al bajar del 35 %, con histéresis y confirmación por tiempo. Como la calibración no mide los dedos juntos, usa 0,26 como base por defecto (medido: juntos 0,25–0,26; separados 0,55–0,57).
+    - Solo cuenta con la apertura sobre el filtro y la palma de frente. La separación solo se evalúa dentro del abanico: al tocar el meñique sube hasta 0,62.
 11. ¿Cómo se sintió tu mano? (fase 5): tres botones grandes con ícono y texto: "Cómoda", "Con algo de esfuerzo" y "Sentí molestia". Con "Sentí molestia" aparece: "Gracias por contarlo. Coméntalo con tu kinesiólogo/a antes de tu próxima rutina."
 12. Cierre: mensaje final, resumen en texto de las repeticiones de cada ejercicio, botón "Escuchar la melodía de hoy", la flor nueva en el jardín, cámara apagada y botón "Volver al inicio".
 

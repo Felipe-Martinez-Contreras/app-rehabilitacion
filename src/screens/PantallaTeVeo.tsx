@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import type { ErrorCamara, EstadoCamara } from '../camera/useCamera';
-import { useHandTracking } from '../camera/useHandTracking';
+import { useHandTracking, type AvisoMano } from '../camera/useHandTracking';
 import { CameraView } from '../components/CameraView';
 import { DebugPanel } from '../components/DebugPanel';
 import { Titulo } from '../components/Titulo';
@@ -16,6 +16,33 @@ const MENSAJES_ERROR: Record<ErrorCamara, string> = {
   desconocido: 'No logré encender la cámara. Puedes intentarlo de nuevo cuando quieras.',
 };
 
+const TITULOS_ERROR: Record<ErrorCamara, string> = {
+  permiso: 'Necesito tu permiso',
+  'sin-camara': 'No encuentro una cámara',
+  ocupada: 'La cámara está ocupada',
+  inseguro: 'Se necesita una conexión segura',
+  desconocido: 'No logré encender la cámara',
+};
+
+function tituloPara(camara: EstadoCamara): string {
+  switch (camara.tipo) {
+    case 'activa':
+      return 'Te veo';
+    case 'error':
+      return TITULOS_ERROR[camara.error];
+    case 'apagada':
+      return 'Tu cámara está apagada';
+    case 'solicitando':
+      return 'Tu cámara';
+  }
+}
+
+const TEXTOS_AVISO: Record<AvisoMano, string> = {
+  lista: 'Te veo. Cuando quieras, seguimos.',
+  girada: 'Cuando quieras, vuelve a mostrar la palma a la cámara.',
+  'sin-mano': 'No alcanzo a ver tu mano. Puedes acercarla un poco, con la palma hacia la cámara.',
+};
+
 interface Props {
   camara: EstadoCamara;
   onEncender: () => void;
@@ -27,18 +54,19 @@ export function PantallaTeVeo({ camara, onEncender, onApagar, depurar }: Props) 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const activa = camara.tipo === 'activa';
-  const { estadoModelo, manoVisible, reintentarModelo, depuracion } = useHandTracking(videoRef, canvasRef, activa);
+  const { estadoModelo, aviso, reintentarModelo, depuracion, contexto } = useHandTracking(
+    videoRef,
+    canvasRef,
+    activa,
+  );
 
-  let aviso = '';
-  if (activa && estadoModelo === 'listo') {
-    aviso = manoVisible
-      ? 'Te veo. Cuando quieras, seguimos.'
-      : 'No alcanzo a ver tu mano. Puedes acercarla un poco, con la palma hacia la cámara.';
-  }
+  const titulo = tituloPara(camara);
+  const textoAviso =activa && estadoModelo === 'listo' ? TEXTOS_AVISO[aviso] : '';
 
   return (
     <section className="pantalla pantalla--camara">
-      <Titulo>Te veo</Titulo>
+      {/* La key hace que el título se monte de nuevo y reciba el foco al cambiar de estado. */}
+      <Titulo key={titulo}>{titulo}</Titulo>
 
       {camara.tipo === 'solicitando' && <p>Esperando el permiso de la cámara…</p>}
 
@@ -89,10 +117,10 @@ export function PantallaTeVeo({ camara, onEncender, onApagar, depurar }: Props) 
       )}
 
       <p className="aviso-mano" role="status" aria-live="polite">
-        {aviso}
+        {textoAviso}
       </p>
 
-      {depurar && activa && <DebugPanel datos={depuracion} />}
+      {depurar && activa && <DebugPanel datos={depuracion} contexto={contexto} />}
     </section>
   );
 }

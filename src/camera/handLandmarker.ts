@@ -1,4 +1,5 @@
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
+import { CONFIANZAS_DETECTOR } from '../depuracion';
 import { urlCarpetaWasm, urlModeloMano } from './assets';
 
 /**
@@ -14,6 +15,7 @@ async function crear(): Promise<HandLandmarker> {
     baseOptions: { modelAssetPath: urlModeloMano(), delegate },
     runningMode: 'VIDEO' as const,
     numHands: 1,
+    ...CONFIANZAS_DETECTOR,
   });
   try {
     return await HandLandmarker.createFromOptions(wasm, opciones('GPU'));

@@ -2,33 +2,68 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import type { HandLandmarker } from '@mediapipe/tasks-vision';
 import { CONFIG } from '../detection/config';
 import { aPixeles } from '../detection/geometry';
-import { actualizarHisteresis, ESTADO_INICIAL, type ConfigHisteresis, type EstadoHisteresis } from '../detection/hysteresis';
 import { calcularMetricas, type Metricas } from '../detection/metrics';
-import { suavizarCampos } from '../detection/smoothing';
+import { orientacionValida } from '../detection/orientacion';
+import {
+  procesarFotograma,
+  SEGUIMIENTO_INICIAL,
+  type ContextoSeguimiento,
+  type EstadoSeguimiento,
+} from '../detection/seguimiento';
+import { aperturaMinimaParaToque } from '../detection/toque';
+import type { Orientacion } from '../detection/types';
+import { VentanaMinMax } from '../detection/ventana';
 import { dibujarMano, type ColoresTrazo } from './dibujarMano';
 import { CONEXIONES_MANO, obtenerDetectorMano } from './handLandmarker';
+
+export const METRICAS_CON_VENTANA = ['apertura', 'flexion', 'separacion', 'toque', 'orientacionZ'] as const;
+export type MetricaConVentana = (typeof METRICAS_CON_VENTANA)[number];
 
 /** Datos en vivo para el panel de depuración. Se escriben por fotograma sin re-renderizar React. */
 export interface DatosDepuracion {
   fps: number;
   manoDetectada: boolean;
+  /** La mano se ve desde hace más de `ignorarAlDetectarMs`. */
+  lista: boolean;
   metricas: Metricas | null;
+  orientacion: Orientacion | null;
   tocando: boolean;
+  abiertaParaToque: boolean;
+  aperturaMinima: number;
+  toquesContados: number;
+  /** Mínimo y máximo de cada métrica suavizada en los últimos segundos. */
+  ventanas: Record<MetricaConVentana, VentanaMinMax>;
 }
 
 export type EstadoModelo = 'cargando' | 'listo' | 'error';
 
-const CAMPOS_SUAVIZADOS = ['apertura', 'toque', 'separacion'] as const;
+/** Aviso para la persona; cambia solo en eventos, no por fotograma. */
+export type AvisoMano = 'sin-mano' | 'girada' | 'lista';
 
-const HISTERESIS_TOQUE: ConfigHisteresis = {
-  direccion: 'bajo',
-  entrar: CONFIG.toque.entrar,
-  salir: CONFIG.toque.salir,
-  fotogramas: CONFIG.fotogramasConfirmacion,
-};
+function crearDatosDepuracion(): DatosDepuracion {
+  const ventana = () => new VentanaMinMax(CONFIG.ventanaDepuracionMs);
+  return {
+    fps: 0,
+    manoDetectada: false,
+    lista: false,
+    metricas: null,
+    orientacion: null,
+    tocando: false,
+    abiertaParaToque: false,
+    aperturaMinima: aperturaMinimaParaToque(null),
+    toquesContados: 0,
+    ventanas: {
+      apertura: ventana(),
+      flexion: ventana(),
+      separacion: ventana(),
+      toque: ventana(),
+      orientacionZ: ventana(),
+    },
+  };
+}
 
-/** Tiempo que un cambio de visibilidad debe mantenerse antes de avisarlo (evita parpadeos). */
-const MS_CAMBIO_VISIBILIDAD = 400;
+/** Tiempo que un cambio de aviso debe mantenerse antes de mostrarlo (evita parpadeos). */
+const MS_CAMBIO_AVISO = 400;
 
 function leerColores(elemento: Element): ColoresTrazo {
   const estilos = getComputedStyle(elemento);
@@ -46,9 +81,11 @@ export function useHandTracking(
 ) {
   const [detector, setDetector] = useState<HandLandmarker | null>(null);
   const [estadoModelo, setEstadoModelo] = useState<EstadoModelo>('cargando');
-  const [manoVisible, setManoVisible] = useState(false);
+  const [aviso, setAviso] = useState<AvisoMano>('sin-mano');
   const [intento, setIntento] = useState(0);
-  const depuracion = useRef<DatosDepuracion>({ fps: 0, manoDetectada: false, metricas: null, tocando: false });
+  const depuracion = useRef<DatosDepuracion>(crearDatosDepuracion());
+  // La calibración llega en el Hito 2; por ahora el signo de palma se puede registrar desde el panel.
+  const contexto = useRef<ContextoSeguimiento>({ calibracion: null, signoPalmaDepuracion: null });
 
   useEffect(() => {
     if (!activo) return;
@@ -78,12 +115,12 @@ export function useHandTracking(
     if (!activo || !detector || !video || !canvas || !ctx) return;
 
     const colores = leerColores(canvas);
+    const datos = depuracion.current;
     let raf = 0;
     let ocupado = false;
     let ultimoTiempoVideo = -1;
-    let suavizadas: Metricas | null = null;
-    let toque: EstadoHisteresis = ESTADO_INICIAL;
-    let visibleAvisado = false;
+    let seguimiento: EstadoSeguimiento = SEGUIMIENTO_INICIAL;
+    let avisoMostrado: AvisoMano = 'sin-mano';
     let desdeCambio = performance.now();
     let cuadros = 0;
     let inicioFps = performance.now();
@@ -102,34 +139,44 @@ export function useHandTracking(
       const puntos = landmarks ? aPixeles(landmarks, ancho, alto) : null;
       dibujarMano(ctx, puntos, CONEXIONES_MANO, colores);
 
-      const metricas = puntos ? calcularMetricas(puntos) : null;
-      if (metricas) {
-        suavizadas = suavizarCampos(suavizadas, metricas, CAMPOS_SUAVIZADOS, CONFIG.alfaSuavizado);
-        toque = actualizarHisteresis(toque, suavizadas.toque, HISTERESIS_TOQUE).estado;
-      } else {
-        suavizadas = null;
-        toque = ESTADO_INICIAL;
+      const r = procesarFotograma(seguimiento, ahora, puntos ? calcularMetricas(puntos) : null, contexto.current);
+      seguimiento = r.estado;
+      const suavizadas = seguimiento.suavizadas;
+      if (r.toqueNuevo) datos.toquesContados++;
+      if (suavizadas && r.lista) {
+        for (const nombre of METRICAS_CON_VENTANA) datos.ventanas[nombre].agregar(ahora, suavizadas[nombre]);
       }
 
-      // Solo se actualiza el estado de React cuando la visibilidad cambia de forma estable.
-      const visible = metricas !== null;
-      if (visible === visibleAvisado) {
+      // Solo se actualiza el estado de React cuando el aviso cambia de forma estable.
+      // Excepción: al aparecer la mano, "No alcanzo a ver tu mano" se quita de inmediato
+      // (el conteo igual espera los primeros ms en procesarFotograma).
+      const avisoActual: AvisoMano = !suavizadas
+        ? 'sin-mano'
+        : r.orientacion && !orientacionValida(r.orientacion)
+          ? 'girada'
+          : 'lista';
+      const manoRecienDetectada = avisoMostrado === 'sin-mano' && avisoActual !== 'sin-mano';
+      if (avisoActual === avisoMostrado) {
         desdeCambio = ahora;
-      } else if (ahora - desdeCambio >= MS_CAMBIO_VISIBILIDAD) {
-        visibleAvisado = visible;
+      } else if (manoRecienDetectada || ahora - desdeCambio >= MS_CAMBIO_AVISO) {
+        avisoMostrado = avisoActual;
         desdeCambio = ahora;
-        setManoVisible(visible);
+        setAviso(avisoActual);
       }
 
       cuadros++;
       if (ahora - inicioFps >= 1000) {
-        depuracion.current.fps = (cuadros * 1000) / (ahora - inicioFps);
+        datos.fps = (cuadros * 1000) / (ahora - inicioFps);
         cuadros = 0;
         inicioFps = ahora;
       }
-      depuracion.current.manoDetectada = visible;
-      depuracion.current.metricas = suavizadas;
-      depuracion.current.tocando = toque.activo;
+      datos.manoDetectada = suavizadas !== null;
+      datos.lista = r.lista;
+      datos.metricas = suavizadas;
+      datos.orientacion = r.orientacion;
+      datos.tocando = seguimiento.toque.activo;
+      datos.abiertaParaToque = r.abiertaParaToque;
+      datos.aperturaMinima = aperturaMinimaParaToque(contexto.current.calibracion);
     };
 
     const paso = () => {
@@ -149,11 +196,13 @@ export function useHandTracking(
     return () => {
       cancelAnimationFrame(raf);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      depuracion.current.manoDetectada = false;
-      depuracion.current.metricas = null;
-      setManoVisible(false);
+      datos.manoDetectada = false;
+      datos.lista = false;
+      datos.metricas = null;
+      datos.orientacion = null;
+      setAviso('sin-mano');
     };
   }, [activo, detector, videoRef, canvasRef]);
 
-  return { estadoModelo, manoVisible, reintentarModelo, depuracion };
+  return { estadoModelo, aviso, reintentarModelo, depuracion, contexto };
 }

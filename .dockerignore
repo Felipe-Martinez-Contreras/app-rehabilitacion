@@ -1,3 +1,5 @@
 node_modules
 dist
 .git
+# Se regenera en el build (prebuild copia los wasm desde node_modules)
+public/wasm
