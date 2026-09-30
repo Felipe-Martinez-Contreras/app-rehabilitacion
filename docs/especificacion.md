@@ -91,7 +91,9 @@ Construye desde cero una app web terapéutica de salud física para un seminario
 - Con la calibración:
   - Guarda la apertura mínima y máxima y la separación máxima.
   - Los umbrales de la flor y del abanico son porcentajes de ese rango personal (por ejemplo, en la flor: cerrada < 30 % y abierta > 70 %).
-  - Si el rango medido es muy pequeño, usa valores conservadores por defecto y avísalo con calma.
+  - Usa siempre el rango calibrado de la persona, nunca valores fijos (los medidos en este documento son de una sola mano). Con la mano quieta la apertura varía 0,01–0,02, así que el rango mínimo aceptable es 0,15.
+  - Si el rango queda bajo 0,15, invita con calma a repetir la calibración: "Puedes intentarlo de nuevo, sin forzar; buscamos tu movimiento cómodo de hoy". Si en el segundo intento sigue bajo 0,15, continúa con su rango ampliado a 0,15 alrededor de su punto medio y avisa que la flor será más sensible.
+  - Los valores por defecto (1,40 para el filtro de toques) solo se usan mientras no hay calibración.
   - Registra el signo de z de "palma de frente" mientras la persona muestra la palma, sin usar la etiqueta izquierda/derecha (cada mano tiene el signo contrario).
   - Registra también el |z| de palma que alcanza la persona. Quienes salen de un yeso de muñeca pueden tener limitado el giro: si |z| queda por debajo de 0,65, avísale con calma que puede acercar un poco la palma hacia la cámara, sin forzar el giro.
   - El filtro de toques relativo al rango calibrado debe cuidar a quienes tengan menos apertura (con 1,40 fijo, el margen mínimo medido fue 0,14).
@@ -111,7 +113,7 @@ Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que a
    - Se empieza con el botón "Comenzar" o sosteniendo la mano abierta 2 s, con anillo de progreso visible.
    - El gesto empieza a contar 1 s después de que aparece la pantalla, nunca es la única vía y se puede desactivar en Ajustes.
 6. La flor (fase 2): una flor SVG abre y cierra sus pétalos en tiempo real siguiendo la apertura de la mano.
-   - Cada ciclo cerrado → abierto cuenta una repetición, deja un pétalo encendido y toca la siguiente nota de la escala pentatónica de Do.
+   - Cada ciclo cerrado → abierto cuenta una repetición (el estado inicial no cuenta: como el ejercicio empieza tras el gesto de mano abierta, la primera repetición exige pasar por "cerrada" y luego por "abierta"), deja un pétalo encendido y toca la siguiente nota de la escala pentatónica de Do.
    - Texto: "Cuando quieras, abre la mano despacio… y ciérrala con suavidad."
 7. Descanso (20 s): temporizador circular con los segundos en texto y "Deja descansar tu mano. Suelta los hombros y respira con calma." Botones "Pausar" y "Seguir ahora".
 8. Piano de dedos (fase 3): tocar con el pulgar índice → medio → anular → meñique.

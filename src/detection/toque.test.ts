@@ -13,7 +13,7 @@ const medir = (o: OpcionesMano = {}): Metricas => {
   return m;
 };
 
-const CALIBRACION: Calibracion = { aperturaMin: 0.6, aperturaMax: 1.8, separacionMax: 0.56, signoPalma: 1 };
+const CALIBRACION: Calibracion = { aperturaMin: 0.6, aperturaMax: 1.8, separacionMax: 0.56, signoPalma: 1, zPalma: 1, ampliado: false };
 
 describe('aperturaMinimaParaToque', () => {
   it('sin calibración usa 1,40', () => {

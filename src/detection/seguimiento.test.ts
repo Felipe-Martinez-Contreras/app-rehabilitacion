@@ -16,7 +16,7 @@ const medir = (o: OpcionesMano): Metricas => {
 
 const SIN_CALIBRAR: ContextoSeguimiento = { calibracion: null, signoPalmaDepuracion: null };
 const CALIBRADO: ContextoSeguimiento = {
-  calibracion: { aperturaMin: 0.6, aperturaMax: 1.85, separacionMax: 0.56, signoPalma: signoDePalma(medir({}).orientacionZ)! },
+  calibracion: { aperturaMin: 0.6, aperturaMax: 1.85, separacionMax: 0.56, signoPalma: signoDePalma(medir({}).orientacionZ)!, zPalma: 1, ampliado: false },
   signoPalmaDepuracion: null,
 };
 

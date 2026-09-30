@@ -262,3 +262,142 @@ p {
   font-size: 0.875rem;
   white-space: pre-wrap;
 }
+
+/* Solo para lectores de pantalla */
+.solo-lector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Pantallas con cámara: en celular, la cámara arriba y la instrucción abajo; en escritorio, lado a lado. */
+.con-camara {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.con-camara__vista .camara {
+  /* Deja espacio para la instrucción y el contador sin scroll en celular. */
+  max-width: min(40rem, calc(45dvh * 4 / 3));
+}
+
+@media (min-width: 48rem) {
+  .con-camara {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+
+  .con-camara__vista .camara {
+    max-width: 40rem;
+  }
+
+  .con-camara .depuracion {
+    grid-column: 1 / -1;
+  }
+}
+
+.paso {
+  color: var(--texto-suave);
+  margin-bottom: 0.25rem;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.ilustracion {
+  width: 8rem;
+  margin: 0.5rem 0 1rem;
+}
+
+/* Anillo de progreso (variable --progreso de 0 a 1, escrita desde el bucle de la cámara) */
+.progreso-postura {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.progreso-postura p {
+  margin: 0;
+}
+
+.anillo {
+  flex: none;
+  width: 4.5rem;
+  height: 4.5rem;
+  transform: rotate(-90deg);
+}
+
+.anillo circle {
+  fill: none;
+  stroke-width: 10;
+}
+
+.anillo__fondo {
+  stroke: var(--fondo);
+}
+
+.anillo__avance {
+  stroke: var(--primario);
+  stroke-dasharray: 100;
+  stroke-dashoffset: calc(100 - 100 * var(--progreso, 0));
+  stroke-linecap: round;
+}
+
+.anillo[aria-valuenow='0'] .anillo__avance {
+  stroke-linecap: butt;
+}
+
+/* Flor: los pétalos crecen con --apertura (0 = cerrada, 1 = abierta) */
+.flor {
+  display: block;
+  width: min(100%, 14rem);
+  height: auto;
+}
+
+.flor__petalo {
+  fill: var(--superficie);
+  stroke: var(--acento);
+  stroke-width: 3;
+  transform-origin: 100px 100px;
+  transform: scale(calc(0.3 + 0.7 * var(--apertura, 0)));
+}
+
+.flor__petalo--encendido {
+  fill: var(--flor);
+  stroke: var(--flor-borde);
+  stroke-width: 4;
+}
+
+.flor__centro {
+  fill: var(--acento);
+}
+
+/* Contador de repeticiones */
+.contador {
+  width: 100%;
+  max-width: 20rem;
+}
+
+.contador__texto {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.contador__barra {
+  width: 100%;
+  height: 1rem;
+  accent-color: var(--primario);
+}

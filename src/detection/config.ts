@@ -60,6 +60,64 @@ export const CONFIG = {
   },
 
   /**
+   * Calibración del rango cómodo: dos posturas (mano abierta y cerrada).
+   * Los umbrales de los ejercicios salen siempre del rango de la persona, nunca
+   * de valores fijos: los medidos arriba son de una sola mano.
+   */
+  calibracion: {
+    /** Tiempo que se sostiene cada postura (con la mano visible y la palma de frente). */
+    sostenerMs: 3000,
+    /** Espera antes de empezar a medir cada postura, para dar tiempo a moverse hacia ella. */
+    esperaAntesMs: 1500,
+    /**
+     * Rango mínimo de apertura (abierta − cerrada). Con la mano quieta la apertura
+     * varía 0,01–0,02; bajo este valor se invita a repetir la calibración y, si en
+     * el segundo intento sigue bajo, se amplía hasta este valor alrededor del punto medio.
+     */
+    rangoMinimo: 0.15,
+    /**
+     * |z| de la palma por debajo del cual se avisa con calma que puede acercar la
+     * palma a la cámara (quienes salen de un yeso pueden tener limitado el giro).
+     */
+    zPalmaComoda: 0.65,
+  },
+
+  /** La flor: cerrada bajo el 30 % y abierta sobre el 70 % del rango calibrado. */
+  flor: {
+    fraccionCerrada: 0.3,
+    fraccionAbierta: 0.7,
+  },
+
+  /**
+   * Inicio con gesto en "¿Todo listo?": mano abierta (sobre el umbral de "abierta"
+   * de la flor) sostenida `sostenerMs`, que empieza a contar `esperaMs` después de
+   * que aparece la pantalla. Si la mano se cierra o se pierde, vuelve a cero.
+   */
+  gestoInicio: {
+    esperaMs: 1000,
+    sostenerMs: 2000,
+  },
+
+  /**
+   * Avisos a la persona (tiempo que una situación debe mantenerse antes de mostrarla).
+   * - sinManoMs: "No alcanzo a ver tu mano" y pausa de temporizadores.
+   * - cambioMs: palma girada, o volver a "lista" desde "girada" (evita parpadeos).
+   *   Al aparecer la mano, el aviso de mano perdida se quita de inmediato.
+   * - estableMs: mano vista sin interrupción para decir "Te veo".
+   */
+  avisos: {
+    sinManoMs: 1500,
+    cambioMs: 400,
+    estableMs: 1000,
+  },
+
+  /**
+   * Temporizadores: si entre dos fotogramas pasa más que esto (pestaña en segundo
+   * plano, equipo lento), solo se suma este máximo.
+   */
+  maximoPasoMs: 100,
+
+  /**
    * Abanico (Hito 2). Umbrales como porcentaje del rango entre dedos juntos y la
    * separación máxima calibrada. La calibración no mide los dedos juntos, así que
    * se usa `separacionJuntosPorDefecto` como base. Solo se evalúa dentro del

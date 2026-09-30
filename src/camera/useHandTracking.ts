@@ -1,5 +1,14 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import type { HandLandmarker } from '@mediapipe/tasks-vision';
+import {
+  actualizarAviso,
+  avisoInicial,
+  manoEstable,
+  temporizadoresEnPausa,
+  type AvisoMano,
+  type EstadoAviso,
+  type ObservacionMano,
+} from '../detection/aviso';
 import { CONFIG } from '../detection/config';
 import { aPixeles } from '../detection/geometry';
 import { calcularMetricas, type Metricas } from '../detection/metrics';
@@ -9,6 +18,7 @@ import {
   SEGUIMIENTO_INICIAL,
   type ContextoSeguimiento,
   type EstadoSeguimiento,
+  type ResultadoFotograma,
 } from '../detection/seguimiento';
 import { aperturaMinimaParaToque } from '../detection/toque';
 import type { Orientacion } from '../detection/types';
@@ -33,12 +43,23 @@ export interface DatosDepuracion {
   toquesContados: number;
   /** Mínimo y máximo de cada métrica suavizada en los últimos segundos. */
   ventanas: Record<MetricaConVentana, VentanaMinMax>;
+  /** Líneas que escribe la pantalla actual (calibración, gesto o ejercicio). */
+  pantalla: string[];
 }
 
 export type EstadoModelo = 'cargando' | 'listo' | 'error';
 
-/** Aviso para la persona; cambia solo en eventos, no por fotograma. */
-export type AvisoMano = 'sin-mano' | 'girada' | 'lista';
+export type { AvisoMano };
+
+/** Lo que recibe cada pantalla en cada fotograma (sin re-renderizar React). */
+export interface Fotograma {
+  t: number;
+  resultado: ResultadoFotograma;
+  /** "No alcanzo a ver tu mano" está visible: los temporizadores del ejercicio se pausan. */
+  enPausa: boolean;
+}
+
+export type OyenteFotograma = (f: Fotograma) => void;
 
 function crearDatosDepuracion(): DatosDepuracion {
   const ventana = () => new VentanaMinMax(CONFIG.ventanaDepuracionMs);
@@ -59,11 +80,9 @@ function crearDatosDepuracion(): DatosDepuracion {
       toque: ventana(),
       orientacionZ: ventana(),
     },
+    pantalla: [],
   };
 }
-
-/** Tiempo que un cambio de aviso debe mantenerse antes de mostrarlo (evita parpadeos). */
-const MS_CAMBIO_AVISO = 400;
 
 function leerColores(elemento: Element): ColoresTrazo {
   const estilos = getComputedStyle(elemento);
@@ -81,10 +100,12 @@ export function useHandTracking(
 ) {
   const [detector, setDetector] = useState<HandLandmarker | null>(null);
   const [estadoModelo, setEstadoModelo] = useState<EstadoModelo>('cargando');
-  const [aviso, setAviso] = useState<AvisoMano>('sin-mano');
+  const [aviso, setAviso] = useState<AvisoMano>('esperando');
+  const [estable, setEstable] = useState(false);
+  const oyentes = useRef(new Set<OyenteFotograma>());
   const [intento, setIntento] = useState(0);
   const depuracion = useRef<DatosDepuracion>(crearDatosDepuracion());
-  // La calibración llega en el Hito 2; por ahora el signo de palma se puede registrar desde el panel.
+  // Mientras no hay calibración, el signo de palma se puede registrar desde el panel.
   const contexto = useRef<ContextoSeguimiento>({ calibracion: null, signoPalmaDepuracion: null });
 
   useEffect(() => {
@@ -108,6 +129,14 @@ export function useHandTracking(
 
   const reintentarModelo = useCallback(() => setIntento((n) => n + 1), []);
 
+  /** Recibe cada fotograma procesado; devuelve la función para dejar de escuchar. */
+  const suscribir = useCallback((oyente: OyenteFotograma) => {
+    oyentes.current.add(oyente);
+    return () => {
+      oyentes.current.delete(oyente);
+    };
+  }, []);
+
   useEffect(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -120,8 +149,8 @@ export function useHandTracking(
     let ocupado = false;
     let ultimoTiempoVideo = -1;
     let seguimiento: EstadoSeguimiento = SEGUIMIENTO_INICIAL;
-    let avisoMostrado: AvisoMano = 'sin-mano';
-    let desdeCambio = performance.now();
+    let aviso: EstadoAviso = avisoInicial(performance.now());
+    let estableMostrado = false;
     let cuadros = 0;
     let inicioFps = performance.now();
 
@@ -147,22 +176,23 @@ export function useHandTracking(
         for (const nombre of METRICAS_CON_VENTANA) datos.ventanas[nombre].agregar(ahora, suavizadas[nombre]);
       }
 
-      // Solo se actualiza el estado de React cuando el aviso cambia de forma estable.
-      // Excepción: al aparecer la mano, "No alcanzo a ver tu mano" se quita de inmediato
-      // (el conteo igual espera los primeros ms en procesarFotograma).
-      const avisoActual: AvisoMano = !suavizadas
+      // El estado de React cambia solo cuando el aviso cambia (ver detection/aviso.ts).
+      const observado: ObservacionMano = !suavizadas
         ? 'sin-mano'
         : r.orientacion && !orientacionValida(r.orientacion)
           ? 'girada'
           : 'lista';
-      const manoRecienDetectada = avisoMostrado === 'sin-mano' && avisoActual !== 'sin-mano';
-      if (avisoActual === avisoMostrado) {
-        desdeCambio = ahora;
-      } else if (manoRecienDetectada || ahora - desdeCambio >= MS_CAMBIO_AVISO) {
-        avisoMostrado = avisoActual;
-        desdeCambio = ahora;
-        setAviso(avisoActual);
+      const anterior = aviso;
+      aviso = actualizarAviso(aviso, ahora, observado);
+      if (aviso.mostrado !== anterior.mostrado) setAviso(aviso.mostrado);
+      const esEstable = manoEstable(aviso, ahora);
+      if (esEstable !== estableMostrado) {
+        estableMostrado = esEstable;
+        setEstable(esEstable);
       }
+
+      const fotograma: Fotograma = { t: ahora, resultado: r, enPausa: temporizadoresEnPausa(aviso) };
+      for (const oyente of oyentes.current) oyente(fotograma);
 
       cuadros++;
       if (ahora - inicioFps >= 1000) {
@@ -200,9 +230,22 @@ export function useHandTracking(
       datos.lista = false;
       datos.metricas = null;
       datos.orientacion = null;
-      setAviso('sin-mano');
+      setAviso('esperando');
+      setEstable(false);
     };
   }, [activo, detector, videoRef, canvasRef]);
 
-  return { estadoModelo, aviso, reintentarModelo, depuracion, contexto };
+  return { estadoModelo, aviso, estable, reintentarModelo, depuracion, contexto, suscribir };
+}
+
+export type SeguimientoMano = ReturnType<typeof useHandTracking>;
+
+/** Escucha los fotogramas mientras la pantalla está montada. El oyente se lee de un ref: puede cambiar sin volver a suscribirse. */
+export function useFotograma(seguimiento: SeguimientoMano, oyente: OyenteFotograma) {
+  const actual = useRef(oyente);
+  useLayoutEffect(() => {
+    actual.current = oyente;
+  });
+  const { suscribir } = seguimiento;
+  useEffect(() => suscribir((f) => actual.current(f)), [suscribir]);
 }
