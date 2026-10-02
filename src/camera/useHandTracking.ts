@@ -23,7 +23,7 @@ import {
 import { aperturaMinimaParaToque } from '../detection/toque';
 import type { Orientacion } from '../detection/types';
 import { VentanaMinMax } from '../detection/ventana';
-import { dibujarMano, type ColoresTrazo } from './dibujarMano';
+import { dibujarAnilloPunta, dibujarMano, type ColoresTrazo } from './dibujarMano';
 import { CONEXIONES_MANO, obtenerDetectorMano } from './handLandmarker';
 
 export const METRICAS_CON_VENTANA = ['apertura', 'flexion', 'separacion', 'toque', 'orientacionZ'] as const;
@@ -103,6 +103,8 @@ export function useHandTracking(
   const [aviso, setAviso] = useState<AvisoMano>('esperando');
   const [estable, setEstable] = useState(false);
   const oyentes = useRef(new Set<OyenteFotograma>());
+  /** Landmark sobre el que se dibuja un anillo (la punta del dedo que sigue en el piano); null sin anillo. */
+  const puntaResaltada = useRef<number | null>(null);
   const [intento, setIntento] = useState(0);
   const depuracion = useRef<DatosDepuracion>(crearDatosDepuracion());
   // Mientras no hay calibración, el signo de palma se puede registrar desde el panel.
@@ -167,6 +169,7 @@ export function useHandTracking(
       const landmarks = resultado.landmarks[0];
       const puntos = landmarks ? aPixeles(landmarks, ancho, alto) : null;
       dibujarMano(ctx, puntos, CONEXIONES_MANO, colores);
+      if (puntos && puntaResaltada.current !== null) dibujarAnilloPunta(ctx, puntos[puntaResaltada.current], colores);
 
       const r = procesarFotograma(seguimiento, ahora, puntos ? calcularMetricas(puntos) : null, contexto.current);
       seguimiento = r.estado;
@@ -235,7 +238,7 @@ export function useHandTracking(
     };
   }, [activo, detector, videoRef, canvasRef]);
 
-  return { estadoModelo, aviso, estable, reintentarModelo, depuracion, contexto, suscribir };
+  return { estadoModelo, aviso, estable, reintentarModelo, depuracion, contexto, suscribir, puntaResaltada };
 }
 
 export type SeguimientoMano = ReturnType<typeof useHandTracking>;

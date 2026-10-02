@@ -126,10 +126,12 @@ Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que a
     - Mientras sostiene, un abanico SVG se despliega, avanza un temporizador circular y crece un acorde suave. Al completar, suena una campana.
     - Si suelta antes, el tiempo se pausa sin penalización y se retoma.
     - Juntar los dedos prepara la siguiente repetición.
-    - Umbrales (separación): "separados" al superar el 70 % del rango entre dedos juntos y la separación máxima calibrada; "juntos" al bajar del 35 %, con histéresis y confirmación por tiempo. Como la calibración no mide los dedos juntos, usa 0,26 como base por defecto (medido: juntos 0,25–0,26; separados 0,55–0,57).
+    - Minicalibración al empezar el abanico: 3 s con los dedos juntos y 3 s con los dedos separados hasta donde sea cómodo, con anillo de progreso, la palma de frente y la apertura sobre el filtro. La separación máxima de la calibración inicial queda solo como referencia, porque depende de cuánto se abre la mano (medido: 0,397 abriéndola al mínimo y 0,513 abierta normal; la mano abierta relajada ya marca 0,34–0,44, y los dedos bien separados 0,55–0,57).
+    - Umbrales (separación): "separados" al superar el 70 % del rango personal entre dedos juntos y separados de la minicalibración; "juntos" al bajar del 35 %, con histéresis y confirmación por tiempo.
+    - Rango mínimo de separación de 0,10 (con los dedos quietos la separación varía 0,02–0,03, así que es de 3 a 5 veces el ruido), igual que con la apertura: si queda bajo el mínimo, invita con calma a repetir la minicalibración; si en el segundo intento sigue bajo, continúa con su rango ampliado al mínimo alrededor de su punto medio y avisa que el abanico será más sensible.
     - Solo cuenta con la apertura sobre el filtro y la palma de frente. La separación solo se evalúa dentro del abanico: al tocar el meñique sube hasta 0,62.
 11. ¿Cómo se sintió tu mano? (fase 5): tres botones grandes con ícono y texto: "Cómoda", "Con algo de esfuerzo" y "Sentí molestia". Con "Sentí molestia" aparece: "Gracias por contarlo. Coméntalo con tu kinesiólogo/a antes de tu próxima rutina."
-12. Cierre: mensaje final, resumen en texto de las repeticiones de cada ejercicio, botón "Escuchar la melodía de hoy", la flor nueva en el jardín, cámara apagada y botón "Volver al inicio".
+12. Cierre: mensaje final, resumen en texto de las repeticiones de cada ejercicio (solo las que se hicieron; un ejercicio saltado se muestra con un texto calmado, nunca como 0), botón "Escuchar la melodía de hoy", la flor nueva en el jardín, cámara apagada y botón "Volver al inicio".
 
 - Durante cada ejercicio están siempre visibles: el contador en texto ("3 de 5") con una barra de progreso accesible, "Detener" y "Saltar este ejercicio".
 - Intensidad en Ajustes:

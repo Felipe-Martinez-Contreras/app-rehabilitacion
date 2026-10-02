@@ -1,5 +1,5 @@
 import { CONFIG } from './config';
-import type { Calibracion } from './types';
+import type { Calibracion, RangoSeparacion } from './types';
 
 /** Valor en la fracción `f` del rango entre `min` y `max`. */
 const enRango = (min: number, max: number, f: number) => min + f * (max - min);
@@ -12,16 +12,11 @@ export function umbralesFlor(c: Calibracion): { cerrada: number; abierta: number
   };
 }
 
-/**
- * Umbrales de separación del abanico: porcentaje del rango entre los dedos
- * juntos (la calibración no los mide: se usa la base por defecto) y la
- * separación máxima calibrada.
- */
-export function umbralesAbanico(c: Calibracion): { juntos: number; separados: number } {
-  const base = CONFIG.abanico.separacionJuntosPorDefecto;
+/** Umbrales de separación del abanico: porcentaje del rango de su minicalibración. */
+export function umbralesAbanico(r: RangoSeparacion): { juntos: number; separados: number } {
   return {
-    juntos: enRango(base, c.separacionMax, CONFIG.abanico.fraccionJuntos),
-    separados: enRango(base, c.separacionMax, CONFIG.abanico.fraccionSeparados),
+    juntos: enRango(r.juntos, r.separados, CONFIG.abanico.fraccionJuntos),
+    separados: enRango(r.juntos, r.separados, CONFIG.abanico.fraccionSeparados),
   };
 }
 

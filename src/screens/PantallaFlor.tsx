@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useFotograma, type SeguimientoMano } from '../camera/useHandTracking';
 import type { Anunciar } from '../components/Anunciador';
+import { AccionesEjercicio, Contador } from '../components/ControlesEjercicio';
 import { Flor, pintarFlor } from '../components/Flor';
 import { Titulo } from '../components/Titulo';
 import { actualizarFlor, FLOR_INICIAL } from '../detection/flor';
@@ -46,18 +47,9 @@ export function PantallaFlor(props: Props) {
     total.current++;
     setHechas(total.current);
     onRepeticion(total.current);
-    anunciar(`Repetición ${total.current} de ${objetivo}`, true);
-    if (total.current >= objetivo) anunciar('La flor está completa.', true);
+    const completo = total.current >= objetivo ? ' La flor está completa.' : '';
+    anunciar(`Repetición ${total.current} de ${objetivo}.${completo}`, true);
   });
-
-  // Esc equivale a "Detener" durante el ejercicio.
-  useEffect(() => {
-    const alPulsar = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onDetener();
-    };
-    document.addEventListener('keydown', alPulsar);
-    return () => document.removeEventListener('keydown', alPulsar);
-  }, [onDetener]);
 
   useEffect(() => {
     const d = datos.current;
@@ -75,27 +67,8 @@ export function PantallaFlor(props: Props) {
           : 'Cuando quieras, abre la mano despacio… y ciérrala con suavidad.'}
       </p>
       <Flor florRef={flor} petalos={objetivo} encendidos={hechas} etiqueta={`Flor con ${hechas} de ${objetivo} pétalos encendidos`} />
-      <div className="contador">
-        <p className="contador__texto" aria-hidden="true">
-          {hechas} de {objetivo}
-        </p>
-        <progress className="contador__barra" max={objetivo} value={hechas} aria-label={`Repeticiones: ${hechas} de ${objetivo}`} />
-      </div>
-      <div className="acciones">
-        {completa && (
-          <button type="button" className="boton" onClick={onSeguir}>
-            Seguir
-          </button>
-        )}
-        <button type="button" className="boton boton--secundario" onClick={onDetener}>
-          Detener
-        </button>
-        {!completa && (
-          <button type="button" className="boton boton--secundario" onClick={onSaltar}>
-            Saltar este ejercicio
-          </button>
-        )}
-      </div>
+      <Contador hechas={hechas} objetivo={objetivo} nombre="Repeticiones de la flor" />
+      <AccionesEjercicio completo={completa} onSeguir={onSeguir} onDetener={onDetener} onSaltar={onSaltar} />
     </section>
   );
 }

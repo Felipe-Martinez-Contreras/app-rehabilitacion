@@ -44,3 +44,17 @@ export function dibujarMano(
     ctx.stroke();
   }
 }
+
+/** Anillo sobre la punta del dedo que sigue en el piano (con contorno claro para cualquier fondo). */
+export function dibujarAnilloPunta(ctx: CanvasRenderingContext2D, punto: Punto3D, colores: ColoresTrazo) {
+  const radio = Math.max(12, ctx.canvas.width / 28);
+  const grosor = Math.max(3, ctx.canvas.width / 200);
+  ctx.beginPath();
+  ctx.arc(punto.x, punto.y, radio, 0, Math.PI * 2);
+  ctx.strokeStyle = colores.contorno;
+  ctx.lineWidth = grosor * 2.5;
+  ctx.stroke();
+  ctx.strokeStyle = colores.linea;
+  ctx.lineWidth = grosor * 1.5;
+  ctx.stroke();
+}

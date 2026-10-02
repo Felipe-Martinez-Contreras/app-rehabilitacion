@@ -118,16 +118,33 @@ export const CONFIG = {
   maximoPasoMs: 100,
 
   /**
-   * Abanico (Hito 2). Umbrales como porcentaje del rango entre dedos juntos y la
-   * separación máxima calibrada. La calibración no mide los dedos juntos, así que
-   * se usa `separacionJuntosPorDefecto` como base. Solo se evalúa dentro del
-   * ejercicio del abanico, con la apertura sobre el umbral y la palma de frente.
+   * El abanico: separar los dedos hasta el rango cómodo y sostener.
+   * Al empezar tiene su propia minicalibración (dedos juntos y separados), porque la
+   * separación máxima de la calibración inicial depende de cuánto se abre la mano
+   * (0,397 abriéndola al mínimo, 0,513 abierta normal; relajada ya marca 0,34–0,44).
+   * Solo se evalúa dentro del abanico, con la apertura sobre el filtro de toques y
+   * la palma de frente: al tocar el meñique la separación sube hasta 0,62.
    */
   abanico: {
+    /** "Separados" sobre el 70 % y "juntos" bajo el 35 % del rango de la minicalibración. */
     fraccionSeparados: 0.7,
     fraccionJuntos: 0.35,
-    separacionJuntosPorDefecto: 0.26,
+    /** Tiempo que se sostiene cada repetición; si suelta antes, se pausa sin penalización. */
+    sostenerMs: 3000,
+    /** Minicalibración: cada postura se sostiene este tiempo, tras una espera para llegar a ella. */
+    calibracionSostenerMs: 3000,
+    calibracionEsperaAntesMs: 1500,
+    /**
+     * Rango mínimo de separación (separados − juntos), igual que con la apertura: bajo
+     * este valor se invita a repetir y, al segundo intento, se amplía alrededor del
+     * punto medio. Con los dedos quietos la separación varía 0,02–0,03 en 5 s, así que
+     * 0,10 es de 3 a 5 veces el ruido. Medido: juntos 0,255 y separados 0,428 (rango 0,173).
+     */
+    rangoMinimo: 0.1,
   },
+
+  /** Descanso entre ejercicios. */
+  descansoMs: 20000,
 
   /**
    * Si la palma mide menos que esto (en píxeles), la mano está demasiado lejos

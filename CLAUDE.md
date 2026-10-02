@@ -30,6 +30,7 @@ App web terapéutica (Vite + React + TypeScript) que usa la cámara para reconoc
   - La apertura por distancias es la métrica principal de la flor y el filtro de toques (60 % del rango calibrado; 1,40 sin calibrar). La flexión por ángulos tiene saltos: solo es informativa.
   - Al detectar la mano se ignoran los primeros 300 ms; al perderla se reinicia el estado del toque y de los contadores en curso.
   - Los umbrales de los ejercicios salen siempre del rango calibrado de la persona, nunca de valores fijos. Rango mínimo 0,15: bajo eso se invita a recalibrar y, al segundo intento, se amplía a 0,15 alrededor de su punto medio. Los valores sin calibrar (1,40) solo rigen antes de calibrar.
+  - El abanico tiene su propia minicalibración (3 s dedos juntos + 3 s separados); sus umbrales (35 % y 70 %) salen de ese rango, con rango mínimo 0,10 (el ruido de la separación con los dedos quietos es 0,02–0,03). La separación máxima de la calibración inicial es solo referencia: depende de cuánto se abre la mano.
   - Toques y repeticiones solo cuentan con la palma de frente (normal con 0, 5 y 17; signo de la palma registrado en la calibración).
 - No usar la etiqueta izquierda/derecha. Video y canvas se espejan juntos; los textos nunca.
 - No re-renderizar React por fotograma: canvas y panel por refs; el estado cambia solo en eventos.

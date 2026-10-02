@@ -19,6 +19,8 @@ interface Props {
   onApagar: () => void;
   depurar: boolean;
   calibrado: boolean;
+  /** En el descanso no se necesita ver la mano: sin avisos de mano perdida o girada. */
+  mostrarAvisos: boolean;
   /** Contenido de la pantalla (con su h1). */
   children: ReactNode;
 }
@@ -28,7 +30,8 @@ interface Props {
  * pantalla a otra (no se reinicia la detección). En celular, la cámara arriba y
  * la instrucción abajo; en escritorio, lado a lado.
  */
-export function DisenoCamara({ stream, videoRef, canvasRef, seguimiento, onApagar, depurar, calibrado, children }: Props) {
+export function DisenoCamara(props: Props) {
+  const { stream, videoRef, canvasRef, seguimiento, onApagar, depurar, calibrado, mostrarAvisos, children } = props;
   const { estadoModelo, aviso, reintentarModelo, depuracion, contexto } = seguimiento;
   return (
     <div className="con-camara">
@@ -58,7 +61,7 @@ export function DisenoCamara({ stream, videoRef, canvasRef, seguimiento, onApaga
             </button>
           </>
         )}
-        {estadoModelo === 'listo' && <p className="aviso-mano">{TEXTOS_AVISO[aviso]}</p>}
+        {estadoModelo === 'listo' && <p className="aviso-mano">{mostrarAvisos ? TEXTOS_AVISO[aviso] : ''}</p>}
       </div>
 
       <div className="con-camara__contenido">{children}</div>

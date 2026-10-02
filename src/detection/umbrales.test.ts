@@ -17,8 +17,8 @@ describe('umbrales relativos al rango calibrado', () => {
     expect(aperturaMinimaParaToque(null)).toBe(1.4);
   });
 
-  it('el abanico usa el rango entre 0,26 (juntos por defecto) y la separación máxima', () => {
-    const { juntos, separados } = umbralesAbanico(base);
+  it('el abanico usa el 35 % y el 70 % del rango de su minicalibración', () => {
+    const { juntos, separados } = umbralesAbanico({ juntos: 0.26, separados: 0.56, ampliado: false });
     expect(juntos).toBeCloseTo(0.26 + 0.35 * 0.3, 5);
     expect(separados).toBeCloseTo(0.26 + 0.7 * 0.3, 5);
   });

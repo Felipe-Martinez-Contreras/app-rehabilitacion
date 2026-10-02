@@ -15,11 +15,20 @@ export type Dedo = 'indice' | 'medio' | 'anular' | 'menique';
 export interface Calibracion {
   aperturaMin: number;
   aperturaMax: number;
+  /** Solo referencia: depende de cuánto se abrió la mano. El abanico usa su propia minicalibración. */
   separacionMax: number;
   /** Signo de la normal de la palma (componente z) cuando la persona muestra la palma. */
   signoPalma: 1 | -1;
   /** |z| de la normal de la palma que alcanzó la persona con la mano abierta. */
   zPalma: number;
+  /** El rango medido era menor que el mínimo y se amplió alrededor de su punto medio. */
+  ampliado: boolean;
+}
+
+/** Rango de separación de la minicalibración del abanico (solo en memoria durante la sesión). */
+export interface RangoSeparacion {
+  juntos: number;
+  separados: number;
   /** El rango medido era menor que el mínimo y se amplió alrededor de su punto medio. */
   ampliado: boolean;
 }

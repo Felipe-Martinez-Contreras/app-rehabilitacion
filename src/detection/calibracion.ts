@@ -38,10 +38,27 @@ export const CALIBRACION_INICIAL: EstadoCalibracion = {
   signoPalma: null,
 };
 
-function mediana(valores: number[]): number {
+export function mediana(valores: number[]): number {
   const orden = [...valores].sort((a, b) => a - b);
   const medio = Math.floor(orden.length / 2);
   return orden.length % 2 ? orden[medio] : (orden[medio - 1] + orden[medio]) / 2;
+}
+
+export type RangoPersonal =
+  | { tipo: 'repetir'; rango: number }
+  | { tipo: 'lista'; min: number; max: number; ampliado: boolean };
+
+/**
+ * Siempre el rango de la persona: si es menor que `rangoMinimo`, en el primer
+ * intento se invita a repetir y desde el segundo se amplía hasta el mínimo
+ * alrededor de su punto medio. Se usa en la calibración inicial y en la del abanico.
+ */
+export function rangoPersonal(min: number, max: number, rangoMinimo: number, intento: number): RangoPersonal {
+  const rango = max - min;
+  if (rango >= rangoMinimo) return { tipo: 'lista', min, max, ampliado: false };
+  if (intento < 2) return { tipo: 'repetir', rango };
+  const medio = (max + min) / 2;
+  return { tipo: 'lista', min: medio - rangoMinimo / 2, max: medio + rangoMinimo / 2, ampliado: true };
 }
 
 /** La postura se puede medir: mano lista y palma de frente (en la cerrada, con el signo ya registrado). */
@@ -109,26 +126,23 @@ export function evaluarCalibracion(estado: EstadoCalibracion, intento: number): 
     throw new Error('La calibración no ha terminado');
   }
   const { rangoMinimo, zPalmaComoda } = CONFIG.calibracion;
-  let aperturaMax = mediana(estado.abierta.map((x) => x.apertura));
-  let aperturaMin = mediana(estado.cerrada.map((x) => x.apertura));
-  const rango = aperturaMax - aperturaMin;
-  const ampliado = rango < rangoMinimo;
-  if (ampliado && intento < 2) return { tipo: 'repetir', rango };
-  if (ampliado) {
-    const medio = (aperturaMax + aperturaMin) / 2;
-    aperturaMin = medio - rangoMinimo / 2;
-    aperturaMax = medio + rangoMinimo / 2;
-  }
+  const rango = rangoPersonal(
+    mediana(estado.cerrada.map((x) => x.apertura)),
+    mediana(estado.abierta.map((x) => x.apertura)),
+    rangoMinimo,
+    intento,
+  );
+  if (rango.tipo === 'repetir') return rango;
   const zPalma = mediana(estado.abierta.map((x) => Math.abs(x.orientacionZ)));
   return {
     tipo: 'lista',
     calibracion: {
-      aperturaMin,
-      aperturaMax,
+      aperturaMin: rango.min,
+      aperturaMax: rango.max,
       separacionMax: mediana(estado.abierta.map((x) => x.separacion)),
       signoPalma: estado.signoPalma,
       zPalma,
-      ampliado,
+      ampliado: rango.ampliado,
     },
     zBaja: zPalma < zPalmaComoda,
   };

@@ -401,3 +401,159 @@ p {
   height: 1rem;
   accent-color: var(--primario);
 }
+
+/* Descanso: temporizador circular con los segundos en texto */
+.temporizador {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.temporizador .anillo {
+  width: 6rem;
+  height: 6rem;
+}
+
+.temporizador__texto {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* Piano de dedos */
+.mano-piano {
+  display: block;
+  width: 7rem;
+  height: auto;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.mano-piano__palma,
+.mano-piano__dedo {
+  fill: var(--superficie);
+  stroke: var(--borde);
+  stroke-width: 2;
+}
+
+.mano-piano__dedo--destacado {
+  fill: var(--flor);
+  stroke: var(--flor-borde);
+  stroke-width: 4;
+}
+
+.mano-piano__anillo {
+  fill: none;
+  stroke: var(--acento);
+  stroke-width: 4;
+}
+
+.teclas {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.tecla {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 5rem;
+  padding: 0.5rem 0.25rem;
+  background: var(--superficie);
+  border: 2px solid var(--borde);
+  border-radius: 0 0 var(--radio) var(--radio);
+  text-align: center;
+}
+
+.tecla--encendida {
+  background: var(--flor);
+  border-color: var(--flor-borde);
+  border-width: 4px;
+}
+
+.tecla__nota {
+  font-weight: 700;
+}
+
+.tecla__dedo {
+  font-size: 0.875rem;
+}
+
+/* Abanico: cada varilla gira según --despliegue (0 = plegado, 1 = abierto) */
+.abanico {
+  display: block;
+  width: min(100%, 16rem);
+  height: auto;
+}
+
+.abanico__varilla {
+  fill: var(--superficie);
+  stroke: var(--acento);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  transform-origin: 100px 120px;
+  transform: rotate(calc(var(--giro) * var(--despliegue, 0.15)));
+}
+
+.abanico__eje {
+  fill: var(--flor);
+  stroke: var(--flor-borde);
+  stroke-width: 2;
+}
+
+/* ¿Cómo se sintió tu mano? */
+.opciones-sensacion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 24rem;
+}
+
+.boton--grande {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 4rem;
+  font-size: 1.125rem;
+  text-align: left;
+}
+
+.boton__icono {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Cierre */
+.resumen {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+
+.flor-nueva {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.flor-nueva .flor {
+  width: 6rem;
+}
+
+.flor-nueva p {
+  margin: 0;
+}

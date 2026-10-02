@@ -5,7 +5,7 @@ import { DEDOS } from '../detection/metrics';
 import { signoDePalma } from '../detection/orientacion';
 import type { ContextoSeguimiento } from '../detection/seguimiento';
 import type { Orientacion } from '../detection/types';
-import { umbralesAbanico, umbralesFlor } from '../detection/umbrales';
+import { umbralesFlor } from '../detection/umbrales';
 import { CONFIANZAS_DETECTOR } from '../depuracion';
 
 const NOMBRE_DEDO = { indice: 'índice', medio: 'medio', anular: 'anular', menique: 'meñique' } as const;
@@ -49,13 +49,11 @@ export function DebugPanel({ datos, contexto, calibrado }: Props) {
       const cal = contexto.current.calibracion;
       const signo = cal?.signoPalma ?? contexto.current.signoPalmaDepuracion;
       const flor = cal ? umbralesFlor(cal) : null;
-      const abanico = cal ? umbralesAbanico(cal) : null;
       const calibracion = cal
         ? [
             `calibración   apertura ${cal.aperturaMin.toFixed(3)}–${cal.aperturaMax.toFixed(3)} (rango ${(cal.aperturaMax - cal.aperturaMin).toFixed(3)}${cal.ampliado ? `, ampliado a ${CONFIG.calibracion.rangoMinimo}` : ''})`,
-            `              separación máx ${cal.separacionMax.toFixed(3)} · |z| palma ${cal.zPalma.toFixed(2)}${cal.zPalma < CONFIG.calibracion.zPalmaComoda ? ` (< ${CONFIG.calibracion.zPalmaComoda}: aviso)` : ''}`,
+            `              separación máx ${cal.separacionMax.toFixed(3)} (solo referencia) · |z| palma ${cal.zPalma.toFixed(2)}${cal.zPalma < CONFIG.calibracion.zPalmaComoda ? ` (< ${CONFIG.calibracion.zPalmaComoda}: aviso)` : ''}`,
             `umbral flor   cerrada < ${flor!.cerrada.toFixed(3)} · abierta > ${flor!.abierta.toFixed(3)}`,
-            `umbral abanico juntos < ${abanico!.juntos.toFixed(3)} · separados > ${abanico!.separados.toFixed(3)}`,
           ]
         : ['calibración   sin calibrar (se usan los valores por defecto)'];
 
