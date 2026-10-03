@@ -17,6 +17,8 @@ import {
 import { CONFIG } from '../detection/config';
 import { progreso } from '../detection/sostener';
 import type { Calibracion, RangoSeparacion } from '../detection/types';
+import { volumenAcorde } from '../sound/acorde';
+import type { Sonido } from '../sound/useSonido';
 import { umbralesAbanico } from '../detection/umbrales';
 
 const INSTRUCCION_CALIBRACION = {
@@ -30,6 +32,7 @@ interface Props {
   seguimiento: SeguimientoMano;
   calibracion: Calibracion;
   anunciar: Anunciar;
+  sonido: Sonido;
   objetivo: number;
   /** Repeticiones ya hechas (al retomar después de "Detener"). */
   inicial: number;
@@ -48,7 +51,7 @@ interface Props {
  * tiempo se pausa sin penalización; juntar los dedos prepara la siguiente.
  */
 export function PantallaAbanico(props: Props) {
-  const { seguimiento, calibracion, anunciar, objetivo, inicial, rango, onRango, onRepeticion, onSeguir, onDetener, onSaltar } =
+  const { seguimiento, calibracion, anunciar, sonido, objetivo, inicial, rango, onRango, onRepeticion, onSeguir, onDetener, onSaltar } =
     props;
   const [fase, setFase] = useState<Fase>(rango ? 'ejercicio' : 'calibrando');
   const [postura, setPostura] = useState<'juntos' | 'separados'>('juntos');
@@ -98,6 +101,8 @@ export function PantallaAbanico(props: Props) {
     ejercicio.current = ra.estado;
     const avance = progreso(ra.estado.sostener, CONFIG.abanico.sostenerMs);
     pintarAnillo(anillo.current, avance);
+    // El acorde crece con el temporizador; al soltar se desvanece y al volver retoma.
+    sonido.acorde(volumenAcorde(avance, ra.estado.sostener.ultimoT !== null));
     // Tras completar, queda desplegado hasta que junta los dedos para la siguiente.
     pintarAbanico(abanico.current, ra.estado.armado ? avance : ra.repeticion || total.current > 0 ? 1 : 0);
     if (ra.estado.armado !== anterior.armado) setArmado(ra.estado.armado);
@@ -112,16 +117,20 @@ export function PantallaAbanico(props: Props) {
     total.current++;
     setHechas(total.current);
     onRepeticion(total.current);
+    sonido.campana();
     const fin = total.current >= objetivo ? ' El abanico está completo.' : '';
     anunciar(`Repetición ${total.current} de ${objetivo}.${fin}`, true);
   });
 
+  const { acorde } = sonido;
   useEffect(() => {
     const d = datos.current;
     return () => {
       d.pantalla = [];
+      // Al salir del ejercicio, el acorde se desvanece.
+      acorde(0);
     };
-  }, [datos]);
+  }, [datos, acorde]);
 
   const intentarDeNuevo = () => {
     calibrando.current = CALIBRACION_ABANICO_INICIAL;
@@ -173,7 +182,7 @@ export function PantallaAbanico(props: Props) {
             ? 'Cuando quieras, separa los dedos hasta tu rango cómodo y sostén unos segundos.'
             : 'Cuando quieras, junta los dedos para preparar el abanico.'}
       </p>
-      <Abanico abanicoRef={abanico} etiqueta={completo ? 'Abanico desplegado' : 'Abanico que se despliega mientras sostienes'} />
+      <Abanico abanicoRef={abanico} pulso={hechas} etiqueta={completo ? 'Abanico desplegado' : 'Abanico que se despliega mientras sostienes'} />
       {!completo && (
         <div className="progreso-postura">
           <AnilloProgreso anilloRef={anillo} etiqueta="Dedos separados sostenidos" />

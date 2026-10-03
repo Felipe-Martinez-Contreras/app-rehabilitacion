@@ -3,6 +3,7 @@ import { useCamera } from './camera/useCamera';
 import { useHandTracking, type AvisoMano } from './camera/useHandTracking';
 import { Abanico } from './components/Abanico';
 import { RegionAvisos, useAnunciador } from './components/Anunciador';
+import { BotonSonido } from './components/BotonSonido';
 import { DisenoCamara } from './components/DisenoCamara';
 import { Flor } from './components/Flor';
 import { ManoPiano } from './components/ManoPiano';
@@ -22,6 +23,7 @@ import { PantallaRangoComodo } from './screens/PantallaRangoComodo';
 import { PantallaTeVeo } from './screens/PantallaTeVeo';
 import { PantallaTodoListo } from './screens/PantallaTodoListo';
 import { PantallaTuCamara } from './screens/PantallaTuCamara';
+import { useSonido } from './sound/useSonido';
 
 type Pantalla =
   | 'bienvenida'
@@ -101,6 +103,8 @@ export function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const seguimiento = useHandTracking(videoRef, canvasRef, camara.tipo === 'activa');
   const { anuncio, anunciar } = useAnunciador();
+  const sonido = useSonido();
+  const { silenciar } = sonido;
   const conCamara = CON_CAMARA.has(pantalla);
   const enDescanso = pantalla === 'descanso-1' || pantalla === 'descanso-2';
 
@@ -125,10 +129,15 @@ export function App() {
     void encender();
   };
 
-  const detenerEn = useCallback((ejercicio: Ejercicio) => {
-    setDetenido(ejercicio);
-    setPantalla('detenido');
-  }, []);
+  const detenerEn = useCallback(
+    (ejercicio: Ejercicio) => {
+      // "Detener" pausa todo: la cámara se apaga al cambiar de pantalla y el sonido se silencia aquí.
+      silenciar();
+      setDetenido(ejercicio);
+      setPantalla('detenido');
+    },
+    [silenciar],
+  );
   const detenerFlor = useCallback(() => detenerEn('flor'), [detenerEn]);
   const detenerPiano = useCallback(() => detenerEn('piano'), [detenerEn]);
   const detenerAbanico = useCallback(() => detenerEn('abanico'), [detenerEn]);
@@ -146,6 +155,7 @@ export function App() {
   const volverAlInicio = () => {
     setResumen(RESUMEN_INICIAL);
     setSaltados(SIN_SALTADOS);
+    sonido.borrarMelodia();
     setRangoAbanico(null);
     setTerminadaAntes(false);
     setSensacion(null);
@@ -196,6 +206,7 @@ export function App() {
             seguimiento={seguimiento}
             calibracion={calibracion}
             anunciar={anunciar}
+            sonido={sonido}
             objetivo={INTENSIDAD_SUAVE.flor}
             inicial={resumen.flor}
             onRepeticion={contar('flor')}
@@ -220,6 +231,7 @@ export function App() {
           <PantallaPiano
             seguimiento={seguimiento}
             anunciar={anunciar}
+            sonido={sonido}
             objetivo={INTENSIDAD_SUAVE.pianoVueltas}
             inicial={resumen.piano}
             onVuelta={contar('piano')}
@@ -245,6 +257,7 @@ export function App() {
             seguimiento={seguimiento}
             calibracion={calibracion}
             anunciar={anunciar}
+            sonido={sonido}
             objetivo={INTENSIDAD_SUAVE.abanico}
             inicial={resumen.abanico}
             rango={rangoAbanico}
@@ -267,6 +280,7 @@ export function App() {
       <header className="encabezado">
         <p className="encabezado__nombre">Manos que Suenan</p>
         {fase !== undefined && <p className="encabezado__fase">Fase {fase} de 5</p>}
+        <BotonSonido activado={sonido.activado} onCambiar={sonido.setActivado} />
       </header>
 
       <main className="principal">
@@ -293,7 +307,7 @@ export function App() {
         {pantalla === 'como-se-sintio' && (
           <PantallaComoSeSintio onElegir={setSensacion} onSeguir={() => setPantalla('cierre')} />
         )}
-        {pantalla === 'cierre' && <PantallaCierre resumen={resumen} saltados={saltados} terminadaAntes={terminadaAntes} onVolver={volverAlInicio} />}
+        {pantalla === 'cierre' && <PantallaCierre resumen={resumen} saltados={saltados} sonido={sonido} terminadaAntes={terminadaAntes} onVolver={volverAlInicio} />}
       </main>
 
       <RegionAvisos anuncio={anuncio} />

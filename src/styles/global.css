@@ -557,3 +557,99 @@ p {
 .flor-nueva p {
   margin: 0;
 }
+
+/* Botón de sonido: texto fijo con aria-pressed. El estado se ve en el ícono (ondas o tachado) y en el relleno. */
+.boton-sonido {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.boton-sonido[aria-pressed='true'] {
+  color: var(--sobre-primario);
+  background: var(--primario);
+}
+
+.boton-sonido[aria-pressed='true']:hover {
+  background: var(--primario-hover);
+}
+
+.boton-sonido[aria-pressed='false'] {
+  border-style: dashed;
+}
+
+/* Melodía del día */
+.melodia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.melodia p {
+  margin: 0;
+}
+
+/* Tecla encendida: además del relleno y el borde, baja un poco, como una tecla pulsada. */
+.tecla--encendida {
+  transform: translateY(0.2rem);
+}
+
+/*
+ * Animaciones decorativas: solo si la persona no pidió reducir el movimiento.
+ * La flor y el abanico reflejan la mano con las variables --apertura y --despliegue,
+ * que se siguen actualizando igual con movimiento reducido (sin transición).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .flor__petalo {
+    transition: transform 60ms linear, fill 300ms ease-out;
+  }
+
+  /* El pétalo recién encendido hace un pulso suave en su borde. */
+  .flor__petalo--encendido {
+    animation: petalo-nuevo 700ms ease-out;
+  }
+
+  @keyframes petalo-nuevo {
+    from {
+      stroke-width: 12;
+      fill-opacity: 0.4;
+    }
+    to {
+      stroke-width: 4;
+      fill-opacity: 1;
+    }
+  }
+
+  .tecla {
+    transition: background-color 180ms ease-out, border-color 180ms ease-out, transform 180ms ease-out;
+  }
+
+  .anillo__avance {
+    transition: stroke-dashoffset 120ms linear;
+  }
+
+  /* El abanico se despliega y se pliega con suavidad, y hace un pulso al completar. */
+  .abanico__varilla {
+    transition: transform 150ms linear;
+  }
+
+  .abanico__pulso {
+    transform-origin: 100px 120px;
+    animation: abanico-completo 600ms ease-out;
+  }
+
+  @keyframes abanico-completo {
+    0% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(1.07);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+}

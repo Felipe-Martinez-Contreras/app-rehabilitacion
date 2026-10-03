@@ -8,21 +8,31 @@ const APERTURA_MAXIMA = 150;
  * Abanico SVG: se despliega con la variable CSS `--despliegue` (0 = plegado,
  * 1 = abierto), que avanza mientras la persona sostiene los dedos separados.
  */
-export function Abanico({ abanicoRef, etiqueta }: { abanicoRef?: RefObject<SVGSVGElement | null>; etiqueta: string }) {
+interface Props {
+  abanicoRef?: RefObject<SVGSVGElement | null>;
+  etiqueta: string;
+  /** Repeticiones completadas: cada vez que cambia, el abanico hace un pulso suave (decorativo). */
+  pulso?: number;
+}
+
+export function Abanico({ abanicoRef, etiqueta, pulso = 0 }: Props) {
   return (
     <svg ref={abanicoRef} className="abanico" viewBox="0 0 200 130" role="img" aria-label={etiqueta}>
-      {Array.from({ length: VARILLAS }, (_, i) => {
-        // Cada varilla gira desde el centro: la del medio queda vertical.
-        const fraccion = i / (VARILLAS - 1) - 0.5;
-        return (
-          <path
-            key={i}
-            className="abanico__varilla"
-            style={{ '--giro': `${fraccion * APERTURA_MAXIMA}deg` } as CSSProperties}
-            d="M100 120 L88 22 Q100 12 112 22 Z"
-          />
-        );
-      })}
+      {/* La key vuelve a montar el grupo para que el pulso se repita en cada repetición. */}
+      <g key={pulso} className={pulso > 0 ? 'abanico__pulso' : undefined}>
+        {Array.from({ length: VARILLAS }, (_, i) => {
+          // Cada varilla gira desde el centro: la del medio queda vertical.
+          const fraccion = i / (VARILLAS - 1) - 0.5;
+          return (
+            <path
+              key={i}
+              className="abanico__varilla"
+              style={{ '--giro': `${fraccion * APERTURA_MAXIMA}deg` } as CSSProperties}
+              d="M100 120 L88 22 Q100 12 112 22 Z"
+            />
+          );
+        })}
+      </g>
       <circle className="abanico__eje" cx="100" cy="120" r="7" />
     </svg>
   );

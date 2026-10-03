@@ -113,7 +113,7 @@ Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que a
    - Se empieza con el botón "Comenzar" o sosteniendo la mano abierta 2 s, con anillo de progreso visible.
    - El gesto empieza a contar 1 s después de que aparece la pantalla, nunca es la única vía y se puede desactivar en Ajustes.
 6. La flor (fase 2): una flor SVG abre y cierra sus pétalos en tiempo real siguiendo la apertura de la mano.
-   - Cada ciclo cerrado → abierto cuenta una repetición (el estado inicial no cuenta: como el ejercicio empieza tras el gesto de mano abierta, la primera repetición exige pasar por "cerrada" y luego por "abierta"), deja un pétalo encendido y toca la siguiente nota de la escala pentatónica de Do.
+   - Cada ciclo cerrado → abierto cuenta una repetición (el estado inicial no cuenta: como el ejercicio empieza tras el gesto de mano abierta, la primera repetición exige pasar por "cerrada" y luego por "abierta"), deja un pétalo encendido y toca la siguiente nota de la escala mayor de Do (Do, Re, Mi, Fa, Sol, La, Si, Do agudo, y sigue en la octava siguiente). Con intensidad Habitual (8) completa una octava exacta; si la flor no termina en Do (con Suave termina en Sol), al completarla suena un acorde suave de Do que resuelve la melodía.
    - Texto: "Cuando quieras, abre la mano despacio… y ciérrala con suavidad."
 7. Descanso (20 s): temporizador circular con los segundos en texto y "Deja descansar tu mano. Suelta los hombros y respira con calma." Botones "Pausar" y "Seguir ahora".
 8. Piano de dedos (fase 3): tocar con el pulgar índice → medio → anular → meñique.
@@ -140,9 +140,16 @@ Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que a
 
 ## 9. Sonido
 - Crea o reanuda el `AudioContext` en el primer clic de la persona (política de reproducción automática).
-- Tonos senoidales o triangulares con envolvente suave (ataque ~15 ms, cola ~1 s) y volumen moderado. Todo en pentatónica de Do, para que cualquier combinación suene armoniosa.
+- Tonos senoidales o triangulares con envolvente suave (ataque ~15 ms, cola ~1 s) y volumen moderado. Todo en Do: la flor sube por la escala mayor de Do (sus notas siempre van en orden, y el oído espera Fa después de Mi); el piano (Do, Mi, Sol, Do agudo), el arpegio y los acordes usan notas de la pentatónica de Do, para que cualquier combinación de toques suene armoniosa.
+- El acorde del abanico es Do4–Mi4–Sol4, claro y en registro medio, con volumen comparable al de las notas de la flor. Su volumen cambia siempre con rampas suaves desde el valor actual (nunca con saltos, que suenan como zumbidos).
+- Con el botón "Sonido" apagado no suena nada: no se crean notas nuevas y el clic del propio botón no reanuda el sonido.
 - Guarda en memoria, solo durante la sesión, cada nota tocada con su tiempo. "Escuchar la melodía de hoy" las reproduce con el mismo ritmo, comprimido a un máximo de 20 s.
-- Botón de sonido sí/no siempre a mano. Todo lo que comunica el sonido se comunica también con texto y con lo visual.
+  - Entran las notas de la flor, los toques del piano y la campana de cada abanico completado; no el arpegio ni el acorde.
+  - Compresión: primero se recortan los silencios de más de 1,5 s a 1,5 s; si aún pasa de 20 s, se escalan los intervalos, sin que dos notas queden a menos de 150 ms (para que cada una se distinga).
+  - Nunca se guarda ni se envía; se borra al volver al inicio.
+- Botón de sonido sí/no siempre a mano, en el encabezado: texto fijo "Sonido" con `aria-pressed` (sin un texto que cambie con el estado, para que el lector de pantalla no anuncie algo contradictorio), y un ícono y un estilo que muestren el estado sin depender solo del color. Todo lo que comunica el sonido se comunica también con texto y con lo visual.
+- El sonido se silencia con un desvanecido corto al ocultar la pestaña y al pulsar "Detener"; se reanuda con el siguiente clic de la persona.
+- La lógica que no depende del navegador (qué nota toca cada evento, la curva del acorde y la compresión de la melodía) va en funciones puras en `src/sound/`, con pruebas Vitest.
 - Guía por voz opcional (apagada por defecto) con `speechSynthesis`, usando solo voces en español con `localService === true`. Si no hay ninguna, la opción no se muestra.
 
 ## 10. Accesibilidad (WCAG 2.2 AA)
@@ -179,7 +186,7 @@ Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que a
   - sostención de 3 s que se pausa al soltar;
   - calibración;
   - pausa al perder la mano.
-- `npm run build` sin errores ni advertencias de TypeScript, y consola del navegador limpia.
+- `npm run build` sin errores ni advertencias de TypeScript, y consola del navegador limpia. Advertencias conocidas que se aceptan: las dos advertencias internas de MediaPipe (`vision_wasm_internal.js`) que aparecen al cargar el modelo: "OpenGL error checking is disabled" (informativa, del motor gráfico) y "landmark_projection_calculator.cc:81 Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI" (aparece con video no cuadrado; la detección funciona bien). No son errores de la app y no se corrigen si eso implica cambiar la detección.
 - Revisa el código para confirmar que no hay fetch, XHR, WebSocket, sendBeacon ni URLs externas en tiempo de ejecución.
 - Despliegue en Google Cloud Run con Docker (no se usa Vercel):
   - `Dockerfile` multietapa: una etapa `node:22-alpine` que ejecuta `npm ci` y `npm run build` (el prebuild copia wasm) y una etapa nginx que sirve `dist/`. `.dockerignore` con node_modules, dist y .git.

@@ -8,8 +8,9 @@ import { PUNTAS_DEDOS } from '../detection/geometry';
 import { DEDOS } from '../detection/metrics';
 import { dedoSiguiente, PIANO_INICIAL, registrarToque, reiniciarVuelta } from '../detection/piano';
 import type { Dedo } from '../detection/types';
+import type { Sonido } from '../sound/useSonido';
 
-/** Nota de cada dedo (el sonido llega en el Hito 3; por ahora la tecla solo se ilumina). */
+/** Nombre de la nota de cada dedo (las frecuencias están en `sound/notas.ts`). */
 const TECLAS: { dedo: Dedo; nota: string }[] = [
   { dedo: 'indice', nota: 'Do' },
   { dedo: 'medio', nota: 'Mi' },
@@ -23,6 +24,7 @@ const MS_VUELTA = 900;
 interface Props {
   seguimiento: SeguimientoMano;
   anunciar: Anunciar;
+  sonido: Sonido;
   objetivo: number;
   /** Vueltas ya hechas (al retomar después de "Detener"). */
   inicial: number;
@@ -34,7 +36,7 @@ interface Props {
 
 /** Piano de dedos (fase 3): tocar con el pulgar índice → medio → anular → meñique. */
 export function PantallaPiano(props: Props) {
-  const { seguimiento, anunciar, objetivo, inicial, onVuelta, onSeguir, onDetener, onSaltar } = props;
+  const { seguimiento, anunciar, sonido, objetivo, inicial, onVuelta, onSeguir, onDetener, onSaltar } = props;
   const [siguiente, setSiguiente] = useState<Dedo>('indice');
   const [vueltas, setVueltas] = useState(inicial);
   /** Teclas iluminadas: un dedo, o todas al completar una vuelta. */
@@ -65,10 +67,13 @@ export function PantallaPiano(props: Props) {
     if (r.toqueNuevo && suavizadas) {
       const dedo = suavizadas.dedoMasCercano;
       const rp = registrarToque(estado.current, dedo);
+      // Suena la nota del dedo tocado, aunque no sea el que sigue.
+      sonido.notaDedo(dedo);
       estado.current = rp.estado;
       const proximo = NOMBRE_DEDO[dedoSiguiente(rp.estado)];
       if (rp.vueltaCompleta) {
         iluminar('todas', MS_VUELTA);
+        sonido.arpegio();
         setVueltas(rp.estado.vueltas);
         onVuelta(rp.estado.vueltas);
         const fin = rp.estado.vueltas >= objetivo ? ' El piano está completo.' : ` Ahora: dedo ${proximo}.`;

@@ -36,6 +36,16 @@ App web terapéutica (Vite + React + TypeScript) que usa la cámara para reconoc
 - No re-renderizar React por fotograma: canvas y panel por refs; el estado cambia solo en eventos.
 - Panel de depuración solo con `?debug=1`.
 
+## Sonido
+- Web Audio API nativa, todo sintetizado (`src/sound/motor.ts`): sin archivos de audio ni librerías, nunca el micrófono, sin sonidos de error. Todo en Do: la flor sube por la escala mayor de Do (Do, Re, Mi, Fa, Sol, La, Si, Do agudo; si no termina en Do, la resuelve un acorde suave de Do); el piano, el arpegio y los acordes usan la pentatónica de Do. El acorde del abanico es Do4–Mi4–Sol4.
+- Los volúmenes cambian siempre con rampas suaves desde el valor actual (`cancelScheduledValues` + `setTargetAtTime`), nunca con saltos por fotograma. Con "Sonido" apagado no se crea ninguna nota, y el clic del propio botón no reanuda el sonido.
+- El `AudioContext` se crea o reanuda en un clic de la persona; se silencia al ocultar la pestaña y al pulsar "Detener".
+- Lógica pura con pruebas en `src/sound/` (`notas.ts`, `acorde.ts`, `melodia.ts`). La melodía del día vive solo en memoria: silencios recortados a 1,5 s, máximo 20 s, separación mínima de 150 ms.
+- Animaciones decorativas solo dentro de `@media (prefers-reduced-motion: no-preference)`; la flor y el abanico siguen reflejando la mano siempre.
+
+## Consola
+- Advertencias conocidas aceptadas en la auditoría de "consola sin errores": las dos advertencias internas de MediaPipe (`vision_wasm_internal.js`) que aparecen al cargar el modelo: "OpenGL error checking is disabled" (informativa, del motor gráfico) y "landmark_projection_calculator.cc:81 Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI" (aparece con video no cuadrado; la detección funciona bien). No son errores de la app y no se corrigen si eso implica cambiar la detección.
+
 ## Tono y derivación
 - Español neutro, tratando de tú. Invitaciones ("cuando quieras", "a tu ritmo", "puedes"), nunca órdenes. Sin urgencia, sin rojo, sin sonidos de error, sin gamificación que genere culpa.
 - Si la detección falla, la responsabilidad es de la app ("No alcanzo a ver tu mano"), nunca de la persona.
@@ -46,6 +56,7 @@ App web terapéutica (Vite + React + TypeScript) que usa la cámara para reconoc
 - `lang="es"`, HTML semántico (header, main, footer, un `h1` por pantalla que recibe el foco), `<button>` reales de al menos 48 × 48 px con texto visible.
 - Foco visible de 3 px. Uso completo con teclado. `aria-live="polite"` para avisos de estado.
 - Contraste AA verificado (tokens en `src/styles/global.css`): lavanda `#8B7FC7` solo para bordes/íconos (texto: `#6B5FAF`); durazno `#F2B89B` solo relleno, con borde `#C4704A`.
+- Botones de alternancia (como "Sonido"): texto fijo con `aria-pressed`, nunca un texto que cambia con el estado junto con `aria-pressed`; el estado se ve además en el ícono o el estilo.
 - El significado nunca depende solo del color. Tamaños en rem; sin scroll horizontal a 360 px ni con zoom al 200 %.
 
 ## Despliegue

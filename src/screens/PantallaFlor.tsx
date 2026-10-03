@@ -6,12 +6,14 @@ import { Flor, pintarFlor } from '../components/Flor';
 import { Titulo } from '../components/Titulo';
 import { actualizarFlor, FLOR_INICIAL } from '../detection/flor';
 import type { Calibracion } from '../detection/types';
+import type { Sonido } from '../sound/useSonido';
 import { aperturaRelativa, umbralesFlor } from '../detection/umbrales';
 
 interface Props {
   seguimiento: SeguimientoMano;
   calibracion: Calibracion;
   anunciar: Anunciar;
+  sonido: Sonido;
   objetivo: number;
   /** Repeticiones ya hechas (al retomar después de "Detener"). */
   inicial: number;
@@ -23,7 +25,7 @@ interface Props {
 
 /** La flor (fase 2): abrir y cerrar la mano. Cada ciclo cerrada → abierta enciende un pétalo. */
 export function PantallaFlor(props: Props) {
-  const { seguimiento, calibracion, anunciar, objetivo, inicial, onRepeticion, onSeguir, onDetener, onSaltar } = props;
+  const { seguimiento, calibracion, anunciar, sonido, objetivo, inicial, onRepeticion, onSeguir, onDetener, onSaltar } = props;
   const [hechas, setHechas] = useState(inicial);
   const total = useRef(inicial);
   const flor = useRef<SVGSVGElement>(null);
@@ -47,6 +49,8 @@ export function PantallaFlor(props: Props) {
     total.current++;
     setHechas(total.current);
     onRepeticion(total.current);
+    sonido.notaFlor(total.current);
+    if (total.current >= objetivo) sonido.resolverFlor(objetivo);
     const completo = total.current >= objetivo ? ' La flor está completa.' : '';
     anunciar(`Repetición ${total.current} de ${objetivo}.${completo}`, true);
   });
