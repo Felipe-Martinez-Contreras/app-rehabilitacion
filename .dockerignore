@@ -3,3 +3,8 @@ dist
 .git
 # Se regenera en el build (prebuild copia los wasm desde node_modules)
 public/wasm
+# Secretos y archivos que la imagen no necesita
+.env
+.env.example
+docker-compose*.yml
+docs

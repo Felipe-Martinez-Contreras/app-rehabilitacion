@@ -21,7 +21,7 @@ Para personas adultas que están recuperando la movilidad de la mano y los dedos
 - **Node.js 22.12 o superior** (con npm).
 - Un navegador actual con cámara (Chrome, Edge, Firefox o Safari).
 - Para la imagen de Docker: Docker. **En Windows, abre Docker Desktop antes de construir la imagen** y espera a que esté en marcha.
-- Para desplegar: la CLI de Google Cloud (`gcloud`) con un proyecto y facturación activos.
+- Para desplegar: la CLI de Google Cloud (`gcloud`) con un proyecto y facturación activos, y un dominio administrado en Cloudflare.
 
 ## Instalar y probar en tu equipo
 
@@ -70,17 +70,23 @@ curl -I http://localhost:8080/
 curl -I http://localhost:8080/wasm/vision_wasm_internal.wasm   # Content-Type: application/wasm
 ```
 
-## Desplegar en Google Cloud Run
+## Desplegar
 
-Desde la carpeta del proyecto:
+La app se publica en una VM de Google Compute Engine con Docker Compose, y llega a internet por un túnel de Cloudflare en un dominio propio. Cloudflare entrega el HTTPS que la cámara necesita, así que no hay que abrir puertos, reservar una IP ni administrar certificados.
+
+`docker-compose.yml` tiene dos servicios:
+
+- `app`: la imagen de este proyecto. No publica puertos hacia afuera.
+- `cloudflared`: el túnel. Lee su token de `TUNNEL_TOKEN`, en un archivo `.env` que no se sube al repositorio (usa `.env.example` como referencia). El hostname público se configura en el panel de Cloudflare apuntando a `http://app:8080`.
+
+En la VM:
 
 ```bash
-gcloud run deploy --source . --allow-unauthenticated
+cp .env.example .env   # y pega el token del túnel
+docker compose up -d --build
 ```
 
-Cloud Run construye la imagen con el `Dockerfile` y entrega una dirección con HTTPS, que es lo que la cámara necesita.
-
-**Si el acceso público queda bloqueado:** algunas organizaciones de Google Cloud tienen una política que impide dar acceso a `allUsers` (uso compartido restringido al dominio). En ese caso el despliegue termina, pero la dirección responde 403. Hay que pedir a quien administra la organización una excepción para el proyecto, o desplegar en un proyecto que no tenga esa política.
+La guía completa, paso a paso, está en [`docs/despliegue-vm.md`](docs/despliegue-vm.md): crear la VM, instalar Docker, crear el túnel, qué funciones de Cloudflare dejar desactivadas para cuidar la privacidad, cómo verificar los encabezados y la pestaña Red después de publicar, cómo actualizar y cómo borrar todo para no generar costos. Incluye la alternativa con `cloudflared` instalado fuera de Docker (`docker-compose.puerto-local.yml`).
 
 ## Privacidad
 
@@ -91,6 +97,7 @@ En lenguaje simple:
 - **Nunca se usa el micrófono.** Solo se analiza la mano, nunca el rostro.
 - **La cámara se enciende solo cuando tú lo eliges** y se apaga al terminar, al pulsar "Detener" y cuando cambias de pestaña. Mientras está encendida se ve el aviso "Cámara activa · procesamiento local", con un botón para apagarla.
 - **La app no se conecta a otros sitios.** No tiene cuentas, analítica ni cookies, y no pide tu nombre ni tu correo.
+- **La página llega a tu navegador a través de Cloudflare.** Como cualquier servidor web, Cloudflare ve las solicitudes de los archivos de la app (por ejemplo, desde qué dirección de internet y a qué hora se pidieron). Nunca recibe imágenes ni datos de tu rutina, porque la app no los envía.
 - **Qué se guarda en tu dispositivo:** solo tus ajustes y un registro simple de cada rutina (la fecha, los ejercicios hechos, las repeticiones y cómo se sintió tu mano). Con ese registro crece "Tu jardín".
 - **Qué no se guarda:** las medidas de tu mano. El rango cómodo se calcula de nuevo en cada sesión.
 - **Cómo borrarlo:** en Ajustes, con "Borrar mi registro".
@@ -111,6 +118,7 @@ No se corrigen, porque hacerlo implicaría cambiar la detección.
 
 - [`docs/especificacion.md`](docs/especificacion.md): la especificación completa.
 - [`docs/decisiones.md`](docs/decisiones.md): decisiones tomadas con mediciones reales.
+- [`docs/despliegue-vm.md`](docs/despliegue-vm.md): guía de despliegue en una VM con Docker y Cloudflare Tunnel.
 - [`CLAUDE.md`](CLAUDE.md): reglas permanentes del proyecto.
 
 ## Créditos

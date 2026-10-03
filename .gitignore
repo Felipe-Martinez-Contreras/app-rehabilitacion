@@ -6,3 +6,6 @@ dist/
 
 # Se genera en cada dev/build desde node_modules (scripts/copiar-wasm.mjs)
 public/wasm/
+
+# Secretos del despliegue (token del túnel de Cloudflare). Usa .env.example como referencia.
+.env

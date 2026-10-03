@@ -44,6 +44,13 @@ export function DialogoPrivacidad({ abierto, onCerrar }: Props) {
         pestaña. Mientras está encendida verás el aviso "Cámara activa · procesamiento local", con un botón para apagarla.
       </p>
 
+      <h3>Cómo llega esta página</h3>
+      <p>
+        Esta página llega a tu navegador a través de Cloudflare. Como cualquier servidor web, Cloudflare ve las
+        solicitudes de los archivos de la app (por ejemplo, desde qué dirección de internet y a qué hora se pidieron).
+        Nunca recibe imágenes ni datos de tu rutina, porque la app no los envía.
+      </p>
+
       <h3>Qué se guarda y cómo borrarlo</h3>
       <p>
         En este dispositivo se guardan solo tus ajustes y un registro simple de cada rutina: la fecha, los ejercicios

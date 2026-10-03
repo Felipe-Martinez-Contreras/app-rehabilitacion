@@ -68,7 +68,9 @@ App web terapéutica (Vite + React + TypeScript) que usa la cámara para reconoc
 - El significado nunca depende solo del color. Tamaños en rem; sin scroll horizontal a 360 px ni con zoom al 200 %.
 
 ## Despliegue
-- Google Cloud Run con Docker; **no se usa Vercel**. `Dockerfile` multietapa (`node:22-alpine` → `nginx:alpine`), nginx en el puerto 8080 (`nginx.conf`).
+- VM de Google Compute Engine con Docker Compose, publicada con Cloudflare Tunnel en un dominio propio; **no se usa Cloud Run ni Vercel**. Cloudflare entrega el HTTPS: sin Caddy, IP estática ni puertos de entrada abiertos. Guía: `docs/despliegue-vm.md`.
+- `Dockerfile` multietapa (`node:22-alpine` → `nginx:alpine`), nginx en el puerto 8080 (`nginx.conf`). `docker-compose.yml`: `app` (sin publicar puertos) y `cloudflared` (token en `TUNNEL_TOKEN`, leído de `.env`). **`.env` nunca se sube**: está en `.gitignore` y en `.dockerignore`. Alternativa con `cloudflared` fuera de Docker: `docker-compose.puerto-local.yml` (solo `127.0.0.1`).
+- En Cloudflare se dejan desactivadas las funciones que inyectan scripts o conectan con otros dominios (Web Analytics / Browser Insights con inyección automática, Rocket Loader, Email Obfuscation, Zaraz). Los encabezados de nginx deben llegar intactos.
 - Encabezados de seguridad en `seguridad.conf`, incluido en **cada** `location` de `nginx.conf` (un `add_header` dentro de un `location` anula los heredados): `Permissions-Policy` (`camera=(self)`, `microphone=()`), `X-Content-Type-Options`, `Referrer-Policy: no-referrer` y una CSP con `default-src 'self'`, `connect-src 'self'` y `script-src 'self' 'wasm-unsafe-eval'` (lo que MediaPipe necesita para WebAssembly). No relajar la CSP sin avisar: MediaPipe no usa workers, `blob:` ni `eval`, y los estilos de React no necesitan `'unsafe-inline'`.
 - Probar la imagen: `docker build -t app-rehabilitacion .` y `docker run --rm -p 8080:8080 app-rehabilitacion` → http://localhost:8080.
-- Desplegar: `gcloud run deploy --source . --allow-unauthenticated`.
+- Desplegar en la VM: `docker compose up -d --build`. Claude no crea recursos en GCP ni en Cloudflare: eso lo hace la persona.

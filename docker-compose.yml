@@ -1,0 +1,22 @@
+# Despliegue en una VM con Docker y Cloudflare Tunnel (ver docs/despliegue-vm.md).
+# Cloudflare entrega el HTTPS: no hace falta abrir puertos de entrada en la VM.
+
+services:
+  # La app: nginx sirve el build en el puerto 8080 del contenedor.
+  # No publica puertos hacia afuera: solo "cloudflared" (misma red de Compose) llega a http://app:8080.
+  app:
+    build: .
+    image: app-rehabilitacion
+    restart: unless-stopped
+
+  # El túnel: sale desde la VM hacia Cloudflare. El hostname público se configura en el
+  # panel de Cloudflare apuntando a http://app:8080. El token se lee del archivo .env
+  # (que no se sube al repositorio; ver .env.example).
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+    depends_on:
+      - app

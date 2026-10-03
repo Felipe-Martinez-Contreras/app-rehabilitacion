@@ -1,0 +1,11 @@
+# Alternativa: cloudflared ya está instalado en la VM, fuera de Docker (o prueba en tu equipo).
+# La app se publica solo en 127.0.0.1 (nunca hacia afuera) y el hostname público de
+# Cloudflare apunta a http://localhost:PUERTO_LOCAL.
+#
+# Se usa junto con el archivo principal, levantando solo el servicio "app":
+#   docker compose -f docker-compose.yml -f docker-compose.puerto-local.yml up -d --build app
+
+services:
+  app:
+    ports:
+      - "127.0.0.1:${PUERTO_LOCAL:-8080}:8080"
