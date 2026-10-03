@@ -1,14 +1,12 @@
 import type { ReactNode } from 'react';
-
-/** Tamaños de texto de A− / A+: del 100 % al 150 %. */
-export const ESCALAS_TEXTO = [1, 1.125, 1.25, 1.375, 1.5] as const;
+import { ESCALAS_TEXTO } from '../guardado/ajustes';
 
 interface Props {
   altoContraste: boolean;
   onAltoContraste: (activo: boolean) => void;
   escala: number;
   onEscala: (indice: number) => void;
-  /** Botón de sonido (y, en la parte B, Ajustes). */
+  /** Botones de sonido y Ajustes. */
   children?: ReactNode;
 }
 

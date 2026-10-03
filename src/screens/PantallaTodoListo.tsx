@@ -13,6 +13,8 @@ interface Props {
   /** Frase sobre lo que viene. */
   frase: string;
   ilustracion: ReactNode;
+  /** Inicio con gesto (Ajustes). Desactivado, solo el botón "Comenzar". */
+  gesto: boolean;
   onComenzar: () => void;
 }
 
@@ -20,7 +22,7 @@ interface Props {
  * "¿Todo listo?", antes de cada ejercicio. Se empieza con el botón o sosteniendo
  * la mano abierta 2 s (el gesto empieza a contar 1 s después de que aparece la pantalla).
  */
-export function PantallaTodoListo({ seguimiento, calibracion, frase, ilustracion, onComenzar }: Props) {
+export function PantallaTodoListo({ seguimiento, calibracion, frase, ilustracion, gesto: conGesto, onComenzar }: Props) {
   const anillo = useRef<SVGSVGElement>(null);
   const gesto = useRef(SOSTENER_INICIAL);
   const inicio = useRef<number | null>(null);
@@ -28,7 +30,7 @@ export function PantallaTodoListo({ seguimiento, calibracion, frase, ilustracion
   const datos = seguimiento.depuracion;
 
   useFotograma(seguimiento, ({ t, resultado: r }) => {
-    if (comenzado.current) return;
+    if (comenzado.current || !conGesto) return;
     inicio.current ??= t;
     gesto.current = actualizarGestoInicio(gesto.current, t, inicio.current, r.estado.suavizadas, r.puedeContar, calibracion);
     pintarAnillo(anillo.current, progreso(gesto.current, CONFIG.gestoInicio.sostenerMs));
@@ -61,10 +63,12 @@ export function PantallaTodoListo({ seguimiento, calibracion, frase, ilustracion
       <button type="button" className="boton" onClick={comenzar}>
         Comenzar
       </button>
-      <div className="progreso-postura">
-        <AnilloProgreso anilloRef={anillo} etiqueta="Mano abierta sostenida para comenzar" />
-        <p>También puedes comenzar sosteniendo la mano abierta unos 2 segundos.</p>
-      </div>
+      {conGesto && (
+        <div className="progreso-postura">
+          <AnilloProgreso anilloRef={anillo} etiqueta="Mano abierta sostenida para comenzar" />
+          <p>También puedes comenzar sosteniendo la mano abierta unos 2 segundos.</p>
+        </div>
+      )}
     </section>
   );
 }

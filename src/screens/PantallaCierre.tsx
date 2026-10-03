@@ -11,15 +11,17 @@ interface Props {
   sonido: Sonido;
   /** La persona eligió "Terminar por hoy" desde "Detener". */
   terminadaAntes: boolean;
+  /** Hubo al menos una repetición: nace una flor (también con "Terminar por hoy"). */
+  florNueva: boolean;
   onVolver: () => void;
 }
 
 /**
  * Cierre: mensaje final, resumen de cada ejercicio y la flor nueva del jardín.
  * La cámara ya está apagada. "Escuchar la melodía de hoy" reproduce las notas de la
- * sesión (solo en memoria). El jardín se guardará en el dispositivo en el Hito 4.
+ * sesión (solo en memoria). La flor nueva queda en el jardín (registro local).
  */
-export function PantallaCierre({ resumen, saltados, sonido, terminadaAntes, onVolver }: Props) {
+export function PantallaCierre({ resumen, saltados, sonido, terminadaAntes, florNueva, onVolver }: Props) {
   const [estadoMelodia, setEstadoMelodia] = useState<'lista' | 'sonando' | 'sin-audio'>('lista');
   const [temporizador, setTemporizador] = useState<number | null>(null);
   const notas = sonido.notasMelodia();
@@ -70,7 +72,7 @@ export function PantallaCierre({ resumen, saltados, sonido, terminadaAntes, onVo
           <li key={linea}>{linea}</li>
         ))}
       </ul>
-      {!terminadaAntes && (
+      {florNueva && (
         <div className="flor-nueva">
           <Flor petalos={5} encendidos={5} apertura={1} etiqueta="Tu flor nueva, con todos sus pétalos encendidos" />
           <p>Una flor nueva para tu jardín.</p>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { Dedo } from '../detection/types';
 import { comprimirMelodia, type NotaMelodia } from './melodia';
 import { MotorSonido } from './motor';
@@ -14,8 +14,8 @@ const MS_ANTES_DE_RESOLVER = 450;
  * nota de la flor, un toque del piano o una campana, se guarda en la melodía del
  * día: solo en memoria, durante la sesión; nunca se guarda ni se envía.
  */
-export function useSonido() {
-  const [activado, setActivado] = useState(true);
+/** `activado` es el ajuste "Sonido" (se guarda en mqs:ajustes). */
+export function useSonido(activado: boolean) {
   const motor = useRef<MotorSonido | null>(null);
   motor.current ??= new MotorSonido();
   const melodia = useRef<NotaMelodia[]>([]);
@@ -99,7 +99,7 @@ export function useSonido() {
     };
   }, []);
 
-  return { ...acciones, activado, setActivado };
+  return { ...acciones, activado };
 }
 
 export type Sonido = ReturnType<typeof useSonido>;

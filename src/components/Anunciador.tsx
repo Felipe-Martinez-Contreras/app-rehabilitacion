@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { guiaVoz } from '../voz/guiaVoz';
 
 /** Como máximo un aviso de estado cada 2 s; las repeticiones siempre se anuncian. */
 const MINIMO_ENTRE_AVISOS_MS = 2000;
@@ -19,6 +20,8 @@ export function useAnunciador() {
     const emitir = () => {
       ultimo.current = performance.now();
       setAnuncio((a) => ({ texto, id: a.id + 1 }));
+      // Si la guía por voz está activa, dice el mismo aviso (con el mismo límite de frecuencia).
+      guiaVoz.decir(texto);
     };
     if (pendiente.current !== null) {
       window.clearTimeout(pendiente.current);

@@ -15,6 +15,7 @@ App web terapéutica (Vite + React + TypeScript) que usa la cámara para reconoc
 - `getUserMedia({ video: { facingMode: 'user' }, audio: false })`. Nunca el micrófono. `<video>` con `playsinline` y `muted`.
 - La cámara se enciende solo por acción de la persona y se apaga al cerrar, al pulsar "Detener", al salir de la rutina y al ocultar la pestaña.
 - Prohibido: grabar video, capturar fotos, exportar el canvas (`toDataURL`/`toBlob`), guardar landmarks o imágenes y enviar cualquier dato a la red (sin fetch, XHR, WebSocket ni sendBeacon propios, sin URLs externas en tiempo de ejecución).
+- Guía por voz solo con voces en español instaladas en el dispositivo (`localService === true`): las voces remotas envían el texto a un servidor. Si no hay ninguna, la opción no se muestra.
 - Indicador visible "Cámara activa · procesamiento local" con botón para apagarla. Solo modelo de mano; nunca el rostro.
 - Ningún recurso externo: el modelo está en `public/models/` (se sube al repo) y los wasm se copian a `public/wasm/` en `predev`/`prebuild` (ignorado por git). URLs absolutas con `new URL(import.meta.env.BASE_URL + ruta, document.baseURI)` (ver `src/camera/assets.ts`).
 

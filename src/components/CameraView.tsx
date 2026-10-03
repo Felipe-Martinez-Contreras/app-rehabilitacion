@@ -4,6 +4,8 @@ interface Props {
   stream: MediaStream;
   videoRef: RefObject<HTMLVideoElement | null>;
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  /** Ver solo el trazo: el video se oculta (sigue alimentando la detección) y queda el dibujo sobre un fondo suave. */
+  soloTrazo: boolean;
 }
 
 /**
@@ -11,7 +13,7 @@ interface Props {
  * los textos van fuera de este contenedor para que nunca se espejen.
  * El video solo se muestra: sus fotogramas no se guardan ni se exportan.
  */
-export function CameraView({ stream, videoRef, canvasRef }: Props) {
+export function CameraView({ stream, videoRef, canvasRef, soloTrazo }: Props) {
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -26,7 +28,7 @@ export function CameraView({ stream, videoRef, canvasRef }: Props) {
   }, [stream, videoRef]);
 
   return (
-    <div className="camara">
+    <div className={`camara${soloTrazo ? ' camara--solo-trazo' : ''}`}>
       <div className="camara__espejo">
         <video ref={videoRef} className="camara__video" autoPlay playsInline muted aria-hidden="true" />
         <canvas ref={canvasRef} className="camara__trazo" aria-hidden="true" />

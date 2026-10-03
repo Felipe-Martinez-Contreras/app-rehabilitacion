@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Titulo } from '../components/Titulo';
-
-export type Sensacion = 'comoda' | 'esfuerzo' | 'molestia';
+import type { Sensacion } from '../guardado/registro';
 
 const OPCIONES: { valor: Sensacion; texto: string; icono: ReactNode }[] = [
   {

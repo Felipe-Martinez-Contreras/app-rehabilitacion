@@ -21,6 +21,7 @@ interface Props {
   calibrado: boolean;
   /** En el descanso no se necesita ver la mano: sin avisos de mano perdida o girada. */
   mostrarAvisos: boolean;
+  soloTrazo: boolean;
   /** Contenido de la pantalla (con su h1). */
   children: ReactNode;
 }
@@ -31,7 +32,7 @@ interface Props {
  * la instrucción abajo; en escritorio, lado a lado.
  */
 export function DisenoCamara(props: Props) {
-  const { stream, videoRef, canvasRef, seguimiento, onApagar, depurar, calibrado, mostrarAvisos, children } = props;
+  const { stream, videoRef, canvasRef, seguimiento, onApagar, depurar, calibrado, mostrarAvisos, soloTrazo, children } = props;
   const { estadoModelo, aviso, reintentarModelo, depuracion, contexto } = seguimiento;
   return (
     <div className="con-camara">
@@ -48,7 +49,7 @@ export function DisenoCamara(props: Props) {
           </button>
         </div>
 
-        <CameraView stream={stream} videoRef={videoRef} canvasRef={canvasRef} />
+        <CameraView stream={stream} videoRef={videoRef} canvasRef={canvasRef} soloTrazo={soloTrazo} />
 
         {estadoModelo === 'cargando' && <p className="aviso-mano">Preparando…</p>}
         {estadoModelo === 'error' && (

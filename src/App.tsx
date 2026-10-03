@@ -4,7 +4,7 @@ import { useHandTracking, type AvisoMano } from './camera/useHandTracking';
 import { Abanico } from './components/Abanico';
 import { RegionAvisos, useAnunciador } from './components/Anunciador';
 import { BotonSonido } from './components/BotonSonido';
-import { ControlesRapidos, ESCALAS_TEXTO } from './components/ControlesRapidos';
+import { ControlesRapidos } from './components/ControlesRapidos';
 import { DialogoPrivacidad } from './components/DialogoPrivacidad';
 import { Pie } from './components/Pie';
 import { DisenoCamara } from './components/DisenoCamara';
@@ -12,12 +12,17 @@ import { Flor } from './components/Flor';
 import { ManoPiano } from './components/ManoPiano';
 import { DEPURAR } from './depuracion';
 import type { Calibracion, RangoSeparacion } from './detection/types';
-import { INTENSIDAD_SUAVE, type Ejercicio, type Resumen } from './rutina';
+import { ESCALAS_TEXTO, type Ajustes } from './guardado/ajustes';
+import { borrarRegistro, guardarAjustes, guardarRegistro, leerAjustes, leerRegistro } from './guardado/almacen';
+import { floresDelJardin, rutinaDaFlor } from './guardado/jardin';
+import { agregarEntrada, crearEntrada, type Sensacion } from './guardado/registro';
+import { INTENSIDADES, type Ejercicio, type Resumen } from './rutina';
+import { PantallaAjustes } from './screens/PantallaAjustes';
 import { PantallaAbanico } from './screens/PantallaAbanico';
 import { PantallaBienvenida } from './screens/PantallaBienvenida';
 import { PantallaCamaraInactiva } from './screens/PantallaCamaraInactiva';
 import { PantallaCierre } from './screens/PantallaCierre';
-import { PantallaComoSeSintio, type Sensacion } from './screens/PantallaComoSeSintio';
+import { PantallaComoSeSintio } from './screens/PantallaComoSeSintio';
 import { PantallaDescanso } from './screens/PantallaDescanso';
 import { PantallaDetenido } from './screens/PantallaDetenido';
 import { PantallaFlor } from './screens/PantallaFlor';
@@ -27,6 +32,7 @@ import { PantallaTeVeo } from './screens/PantallaTeVeo';
 import { PantallaTodoListo } from './screens/PantallaTodoListo';
 import { PantallaTuCamara } from './screens/PantallaTuCamara';
 import { useSonido } from './sound/useSonido';
+import { guiaVoz, useVozEspanol } from './voz/guiaVoz';
 
 type Pantalla =
   | 'bienvenida'
@@ -43,7 +49,8 @@ type Pantalla =
   | 'abanico'
   | 'detenido'
   | 'como-se-sintio'
-  | 'cierre';
+  | 'cierre'
+  | 'ajustes';
 
 /** Pantallas que usan la cámara; al salir de ellas se apaga. */
 const CON_CAMARA: ReadonlySet<Pantalla> = new Set([
@@ -65,6 +72,20 @@ const DESPUES_DE: Record<Ejercicio, Pantalla> = { flor: 'descanso-1', piano: 'de
 const SIN_SALTADOS: readonly Ejercicio[] = [];
 
 const FASE_EJERCICIO: Record<Ejercicio, number> = { flor: 2, piano: 3, abanico: 4 };
+
+/** Ejercicio en curso o por venir en cada pantalla de la rutina (para pausar y recalibrar). */
+const EJERCICIO_DE: Partial<Record<Pantalla, Ejercicio>> = {
+  'todo-listo-flor': 'flor',
+  flor: 'flor',
+  'descanso-1': 'piano',
+  'todo-listo-piano': 'piano',
+  piano: 'piano',
+  'descanso-2': 'abanico',
+  'todo-listo-abanico': 'abanico',
+  abanico: 'abanico',
+};
+
+const TODO_LISTO: Record<Ejercicio, Pantalla> = { flor: 'todo-listo-flor', piano: 'todo-listo-piano', abanico: 'todo-listo-abanico' };
 
 const FASE: Partial<Record<Pantalla, number>> = {
   bienvenida: 1,
@@ -96,24 +117,35 @@ const prefiereMasContraste = () => window.matchMedia?.('(prefers-contrast: more)
 
 export function App() {
   const [pantalla, setPantalla] = useState<Pantalla>('bienvenida');
-  const [altoContraste, setAltoContraste] = useState(prefiereMasContraste);
-  const [escalaTexto, setEscalaTexto] = useState(0);
+  const [ajustes, setAjustes] = useState<Ajustes>(() => leerAjustes());
+  const [registro, setRegistro] = useState(() => leerRegistro());
   const [privacidadAbierta, setPrivacidadAbierta] = useState(false);
+  /** Adónde vuelve "Volver" de Ajustes. */
+  const [trasAjustes, setTrasAjustes] = useState<Pantalla>('bienvenida');
+  /** Adónde sigue la calibración: el primer ejercicio, o el que estaba en pausa al recalibrar. */
+  const [trasCalibrar, setTrasCalibrar] = useState<Pantalla>('todo-listo-flor');
+  /** Objetivo de cada ejercicio, fijado al comenzarlo (un cambio de intensidad rige desde el siguiente). */
+  const [objetivos, setObjetivos] = useState<Resumen>(() => INTENSIDADES[ajustes.intensidad]);
+  const registrada = useRef(false);
+  /** Ejercicios ya comenzados en esta rutina: su objetivo no cambia aunque se recalibre o cambie la intensidad. */
+  const comenzados = useRef(new Set<Ejercicio>());
+  const altoContraste = ajustes.altoContraste ?? prefiereMasContraste();
+  const escalaTexto = ajustes.tamanoTexto;
   const [calibracion, setCalibracion] = useState<Calibracion | null>(null);
   const [rangoAbanico, setRangoAbanico] = useState<RangoSeparacion | null>(null);
   const [resumen, setResumen] = useState<Resumen>(RESUMEN_INICIAL);
   const [saltados, setSaltados] = useState(SIN_SALTADOS);
   const [detenido, setDetenido] = useState<Ejercicio>('flor');
   const [terminadaAntes, setTerminadaAntes] = useState(false);
-  // Se guardará en el registro local en el Hito 4.
-  const [, setSensacion] = useState<Sensacion | null>(null);
+  const [sensacion, setSensacion] = useState<Sensacion | null>(null);
   const { estado: camara, encender, apagar } = useCamera();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const seguimiento = useHandTracking(videoRef, canvasRef, camara.tipo === 'activa');
   const { anuncio, anunciar } = useAnunciador();
-  const sonido = useSonido();
+  const sonido = useSonido(ajustes.sonido);
   const { silenciar } = sonido;
+  const voz = useVozEspanol();
   const conCamara = CON_CAMARA.has(pantalla);
   const enDescanso = pantalla === 'descanso-1' || pantalla === 'descanso-2';
 
@@ -128,8 +160,30 @@ export function App() {
     document.documentElement.style.setProperty('--escala', String(ESCALAS_TEXTO[escalaTexto]));
   }, [escalaTexto]);
 
+  /** Cada cambio de ajustes se aplica y se guarda al momento (si el navegador lo permite). */
+  const cambiarAjustes = useCallback((cambios: Partial<Ajustes>) => {
+    setAjustes((actuales) => {
+      const nuevos = { ...actuales, ...cambios };
+      guardarAjustes(nuevos);
+      return nuevos;
+    });
+  }, []);
+
+  useEffect(() => {
+    guiaVoz.configurar(ajustes.voz, voz);
+  }, [ajustes.voz, voz]);
+
+  // Al ocultar la pestaña, la guía por voz se calla (la cámara y el sonido también se detienen).
+  useEffect(() => {
+    const alCambiar = () => {
+      if (document.visibilityState === 'hidden') guiaVoz.callar();
+    };
+    document.addEventListener('visibilitychange', alCambiar);
+    return () => document.removeEventListener('visibilitychange', alCambiar);
+  }, []);
+
   const cambiarEscala = (indice: number) => {
-    setEscalaTexto(indice);
+    cambiarAjustes({ tamanoTexto: indice });
     anunciar(`Texto al ${Math.round(ESCALAS_TEXTO[indice] * 100)} %`, true);
   };
 
@@ -156,8 +210,9 @@ export function App() {
 
   const detenerEn = useCallback(
     (ejercicio: Ejercicio) => {
-      // "Detener" pausa todo: la cámara se apaga al cambiar de pantalla y el sonido se silencia aquí.
+      // "Detener" pausa todo: la cámara se apaga al cambiar de pantalla; el sonido y la voz se silencian aquí.
       silenciar();
+      guiaVoz.callar();
       setDetenido(ejercicio);
       setPantalla('detenido');
     },
@@ -177,7 +232,63 @@ export function App() {
     setPantalla('como-se-sintio');
   };
 
+  /** Abrir Ajustes pausa todo, como "Detener"; "Volver" regresa a la pausa del ejercicio (o a la pantalla anterior). */
+  const abrirAjustes = () => {
+    if (pantalla === 'ajustes') return;
+    silenciar();
+    guiaVoz.callar();
+    const ejercicio = EJERCICIO_DE[pantalla];
+    if (ejercicio) {
+      setDetenido(ejercicio);
+      setTrasAjustes('detenido');
+    } else {
+      setTrasAjustes(pantalla);
+    }
+    setPantalla('ajustes');
+  };
+
+  /** "Recalibrar": repite la calibración dentro de la sesión y vuelve al ejercicio que estaba en pausa. */
+  const recalibrar = () => {
+    setCalibracion(null);
+    setRangoAbanico(null);
+    setTrasCalibrar(trasAjustes === 'detenido' ? TODO_LISTO[detenido] : 'todo-listo-flor');
+    setPantalla('rango-comodo');
+    void encender();
+  };
+
+  const borrarMiRegistro = () => {
+    const ok = borrarRegistro();
+    if (ok) setRegistro([]);
+    return ok;
+  };
+
+  /** Al comenzar un ejercicio se fija su objetivo con la intensidad de ese momento. */
+  const comenzar = (ejercicio: Ejercicio) => {
+    if (!comenzados.current.has(ejercicio)) {
+      comenzados.current.add(ejercicio);
+      setObjetivos((o) => ({ ...o, [ejercicio]: INTENSIDADES[ajustes.intensidad][ejercicio] }));
+    }
+    setPantalla(ejercicio);
+  };
+
+  // Al llegar al cierre (por el flujo normal o con "Terminar por hoy"), se anota la rutina una vez.
+  useEffect(() => {
+    if (pantalla !== 'cierre' || registrada.current) return;
+    registrada.current = true;
+    const entrada = crearEntrada(new Date(), { calibrada: calibracion !== null, repeticiones: resumen, objetivos, sensacion });
+    setRegistro((anterior) => {
+      const nuevo = agregarEntrada(anterior, entrada);
+      guardarRegistro(nuevo);
+      return nuevo;
+    });
+  }, [pantalla, calibracion, resumen, objetivos, sensacion]);
+
   const volverAlInicio = () => {
+    registrada.current = false;
+    comenzados.current.clear();
+    setCalibracion(null);
+    setTrasCalibrar('todo-listo-flor');
+    setObjetivos(INTENSIDADES[ajustes.intensidad]);
     setResumen(RESUMEN_INICIAL);
     setSaltados(SIN_SALTADOS);
     sonido.borrarMelodia();
@@ -205,7 +316,7 @@ export function App() {
           seguimiento={seguimiento}
           anunciar={anunciar}
           onCalibrada={setCalibracion}
-          onSeguir={() => setPantalla('todo-listo-flor')}
+          onSeguir={() => setPantalla(trasCalibrar)}
         />
       );
     }
@@ -221,8 +332,11 @@ export function App() {
             seguimiento={seguimiento}
             calibracion={calibracion}
             frase="Ahora, la flor: abre y cierra la mano con calma. Cada vez que la abras, se enciende un pétalo."
-            ilustracion={<Flor petalos={INTENSIDAD_SUAVE.flor} encendidos={0} apertura={0.8} etiqueta="Ilustración de una flor abierta" />}
-            onComenzar={() => setPantalla('flor')}
+            ilustracion={
+              <Flor petalos={INTENSIDADES[ajustes.intensidad].flor} encendidos={0} apertura={0.8} etiqueta="Ilustración de una flor abierta" />
+            }
+            gesto={ajustes.inicioConGesto}
+            onComenzar={() => comenzar('flor')}
           />
         );
       case 'flor':
@@ -232,7 +346,7 @@ export function App() {
             calibracion={calibracion}
             anunciar={anunciar}
             sonido={sonido}
-            objetivo={INTENSIDAD_SUAVE.flor}
+            objetivo={objetivos.flor}
             inicial={resumen.flor}
             onRepeticion={contar('flor')}
             onSeguir={() => setPantalla(DESPUES_DE.flor)}
@@ -248,7 +362,8 @@ export function App() {
             calibracion={calibracion}
             frase="Ahora, el piano de dedos: toca con el pulgar la punta del índice, el medio, el anular y el meñique, en ese orden."
             ilustracion={<ManoPiano destacado="indice" />}
-            onComenzar={() => setPantalla('piano')}
+            gesto={ajustes.inicioConGesto}
+            onComenzar={() => comenzar('piano')}
           />
         );
       case 'piano':
@@ -257,7 +372,7 @@ export function App() {
             seguimiento={seguimiento}
             anunciar={anunciar}
             sonido={sonido}
-            objetivo={INTENSIDAD_SUAVE.pianoVueltas}
+            objetivo={objetivos.piano}
             inicial={resumen.piano}
             onVuelta={contar('piano')}
             onSeguir={() => setPantalla(DESPUES_DE.piano)}
@@ -273,7 +388,8 @@ export function App() {
             calibracion={calibracion}
             frase="Ahora, el abanico: separa los dedos hasta tu rango cómodo y sostén unos segundos. Antes conoceremos tu movimiento."
             ilustracion={<Abanico etiqueta="Ilustración de un abanico" />}
-            onComenzar={() => setPantalla('abanico')}
+            gesto={ajustes.inicioConGesto}
+            onComenzar={() => comenzar('abanico')}
           />
         );
       case 'abanico':
@@ -283,7 +399,7 @@ export function App() {
             calibracion={calibracion}
             anunciar={anunciar}
             sonido={sonido}
-            objetivo={INTENSIDAD_SUAVE.abanico}
+            objetivo={objetivos.abanico}
             inicial={resumen.abanico}
             rango={rangoAbanico}
             onRango={setRangoAbanico}
@@ -310,17 +426,22 @@ export function App() {
           </div>
           <ControlesRapidos
             altoContraste={altoContraste}
-            onAltoContraste={setAltoContraste}
+            onAltoContraste={(activo) => cambiarAjustes({ altoContraste: activo })}
             escala={escalaTexto}
             onEscala={cambiarEscala}
           >
-            <BotonSonido activado={sonido.activado} onCambiar={sonido.setActivado} />
+            <BotonSonido activado={ajustes.sonido} onCambiar={(activo) => cambiarAjustes({ sonido: activo })} />
+            <button type="button" className="boton boton--secundario" onClick={abrirAjustes}>
+              Ajustes
+            </button>
           </ControlesRapidos>
         </div>
       </header>
 
       <main className="principal">
-        {pantalla === 'bienvenida' && <PantallaBienvenida onComenzar={() => setPantalla('tu-camara')} />}
+        {pantalla === 'bienvenida' && (
+          <PantallaBienvenida flores={floresDelJardin(registro)} onComenzar={() => setPantalla('tu-camara')} />
+        )}
         {pantalla === 'tu-camara' && <PantallaTuCamara onActivar={activarCamara} />}
         {conCamara &&
           (camara.tipo === 'activa' ? (
@@ -333,6 +454,7 @@ export function App() {
               depurar={DEPURAR}
               calibrado={calibracion !== null}
               mostrarAvisos={!enDescanso}
+              soloTrazo={ajustes.soloTrazo}
             >
               {contenidoConCamara()}
             </DisenoCamara>
@@ -343,7 +465,27 @@ export function App() {
         {pantalla === 'como-se-sintio' && (
           <PantallaComoSeSintio onElegir={setSensacion} onSeguir={() => setPantalla('cierre')} />
         )}
-        {pantalla === 'cierre' && <PantallaCierre resumen={resumen} saltados={saltados} sonido={sonido} terminadaAntes={terminadaAntes} onVolver={volverAlInicio} />}
+        {pantalla === 'cierre' && (
+          <PantallaCierre
+            resumen={resumen}
+            saltados={saltados}
+            sonido={sonido}
+            terminadaAntes={terminadaAntes}
+            florNueva={rutinaDaFlor(resumen)}
+            onVolver={volverAlInicio}
+          />
+        )}
+        {pantalla === 'ajustes' && (
+          <PantallaAjustes
+            ajustes={ajustes}
+            onCambiar={cambiarAjustes}
+            vozDisponible={voz !== null}
+            puedeRecalibrar={calibracion !== null && (trasAjustes === 'detenido' || CON_CAMARA.has(trasAjustes))}
+            onRecalibrar={recalibrar}
+            onBorrarRegistro={borrarMiRegistro}
+            onVolver={() => setPantalla(trasAjustes)}
+          />
+        )}
       </main>
 
       <RegionAvisos anuncio={anuncio} />

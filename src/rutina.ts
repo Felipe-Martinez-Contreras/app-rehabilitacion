@@ -1,13 +1,16 @@
-/**
- * Datos de la rutina que no son de detección.
- * La intensidad se elegirá en Ajustes (Hito 4); por ahora se usa "Suave", la de por defecto.
- */
-export const INTENSIDAD_SUAVE = { flor: 5, pianoVueltas: 2, abanico: 3 } as const;
+import type { Intensidad } from './guardado/ajustes';
 
+/** Datos de la rutina que no son de detección. */
 export type Ejercicio = 'flor' | 'piano' | 'abanico';
 
 /** Repeticiones (o vueltas, en el piano) que la persona hizo de verdad en cada ejercicio. */
 export type Resumen = Record<Ejercicio, number>;
+
+/** Objetivo de cada ejercicio según la intensidad elegida en Ajustes (el piano, en vueltas). */
+export const INTENSIDADES: Record<Intensidad, Resumen> = {
+  suave: { flor: 5, piano: 2, abanico: 3 },
+  habitual: { flor: 8, piano: 3, abanico: 5 },
+};
 
 const NOMBRE: Record<Ejercicio, string> = { flor: 'La flor', piano: 'Piano de dedos', abanico: 'El abanico' };
 const UNIDAD: Record<Ejercicio, [singular: string, plural: string]> = {
