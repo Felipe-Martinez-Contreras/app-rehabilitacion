@@ -46,8 +46,10 @@ Se necesitaba distinguir la mano abierta del puño, para la flor y para que un p
 | --- | --- |
 | Palma de frente | −0,96 a −0,99 |
 | Dorso | 0,99 |
-| De canto | −0,39 a 0,31 |
+| De canto, con la mano quieta | −0,39 a 0,13 |
+| De canto, al intentar tocar | −0,24 a 0,31 |
 
+- Las dos filas "de canto" vienen de pruebas distintas; en ambas, |z| queda bajo el límite de 0,5.
 - Con la mano abierta de dorso (apertura 1,53–1,94, toque 0,111) y de canto (toque 0,202), el filtro de apertura no alcanzaba: **solo la orientación bloqueó esos toques**.
 - Cada mano tiene el signo contrario. Con la otra mano, el signo registrado fue "+" y contó 8 de 8 toques. Por eso el signo se registra en la calibración y nunca se usa la etiqueta izquierda/derecha del modelo, que además depende del espejo.
 - Quien sale de un yeso puede tener limitado el giro de la muñeca: si la palma no llega a |z| = 0,65, la app lo avisa con calma, sin pedir que fuerce el giro.

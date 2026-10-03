@@ -11,7 +11,8 @@
  *   no sirve como filtro, queda solo como dato informativo en el panel.
  * - Toque: mínimo 0,14–0,15; el anular oscilaba entre 0,20 y 0,30.
  * - Separación: dedos juntos 0,25–0,26; separados 0,55–0,57; al tocar el meñique sube a 0,62.
- * - Orientación z: palma ±0,96–1,00, dorso con el signo contrario, de canto −0,39 a 0,13.
+ * - Orientación z: palma ±0,96–1,00, dorso con el signo contrario. De canto, en dos pruebas
+ *   distintas: con la mano quieta, −0,39 a 0,13; al intentar tocar de canto, −0,24 a 0,31.
  *   Con la palma de frente, los toques midieron apertura 1,54–1,61 (margen 0,14 sobre 1,40).
  * - fps entre 29 y 60: por eso los cambios de estado se confirman por tiempo, no por fotogramas.
  */
