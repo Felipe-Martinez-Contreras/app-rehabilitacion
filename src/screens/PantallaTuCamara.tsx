@@ -10,9 +10,9 @@ export function PantallaTuCamara({ onActivar }: { onActivar: () => void }) {
       </p>
       <h2>Para que te vea mejor</h2>
       <ul className="consejos">
-        <li>Busca luz de frente, no detrás de ti.</li>
-        <li>Deja tu mano a unos 40–60 cm de la cámara.</li>
-        <li>Muestra la palma hacia la cámara.</li>
+        <li>Ayuda tener la luz de frente, no detrás de ti.</li>
+        <li>Tu mano se ve mejor a unos 40–60 cm de la cámara.</li>
+        <li>Con la palma hacia la cámara.</li>
       </ul>
       <button type="button" className="boton" onClick={onActivar}>
         Activar cámara

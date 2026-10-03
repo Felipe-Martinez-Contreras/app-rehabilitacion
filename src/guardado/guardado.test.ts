@@ -207,3 +207,51 @@ describe('voces para la guía por voz', () => {
     expect(elegirVoz(voces)?.name).toBe('EE. UU.');
   });
 });
+
+describe('casos borde del guardado y la voz', () => {
+  it('los ajustes que no son un objeto vuelven a los valores por defecto', () => {
+    for (const x of ['texto', 42, [], true, undefined]) expect(validarAjustes(x)).toEqual(AJUSTES_POR_DEFECTO);
+    expect(validarAjustes({ tamanoTexto: -1, sonido: 'sí', altoContraste: 'alto' })).toEqual(AJUSTES_POR_DEFECTO);
+  });
+
+  it('el registro rechaza conteos no enteros o desmedidos y repeticiones ausentes', () => {
+    expect(validarEntrada({ ...entrada(), repeticiones: { flor: 2.5, piano: 0, abanico: 0 } })).toBeNull();
+    expect(validarEntrada({ ...entrada(), repeticiones: { flor: 5000, piano: 0, abanico: 0 } })).toBeNull();
+    expect(validarEntrada({ ...entrada(), repeticiones: null })).toBeNull();
+    expect(validarEntrada({ ...entrada(), repeticiones: { flor: 1 } })).toBeNull();
+    expect(validarEntrada(null)).toBeNull();
+  });
+
+  it('las fases repetidas o desordenadas se guardan una vez y en orden', () => {
+    expect(validarEntrada({ ...entrada(), fases: [5, 2, 2, 1] })?.fases).toEqual([1, 2, 5]);
+    expect(validarEntrada({ ...entrada(), fases: [] })?.fases).toEqual([]);
+  });
+
+  it('agregar una entrada inválida no cambia el registro', () => {
+    const antes = [entrada()];
+    expect(agregarEntrada(antes, { ...entrada(), fecha: 'ayer' })).toEqual(antes);
+  });
+
+  it('la fecha rellena con ceros el mes y el día', () => {
+    expect(fechaLocal(new Date(2027, 2, 9))).toBe('2027-03-09');
+  });
+
+  it('una rutina sin repeticiones se registra, pero no da flor', () => {
+    const e = crearEntrada(new Date(2026, 9, 3), rutina({ repeticiones: { flor: 0, piano: 0, abanico: 0 }, sensacion: 'molestia' }));
+    expect(e.fases).toEqual([1, 5]);
+    expect(floresDelJardin([e])).toBe(0);
+    expect(floresDibujadas(-2)).toEqual({ dibujadas: 0, mas: 0 });
+  });
+
+  it('la voz acepta "es" sin región y mayúsculas, y rechaza otros idiomas de España', () => {
+    const voces: VozBasica[] = [
+      { name: 'Euskera', lang: 'eu-ES', localService: true },
+      { name: 'Catalán', lang: 'ca-ES', localService: true },
+      { name: 'Estonio', lang: 'est', localService: true },
+      { name: 'Genérica', lang: 'es', localService: true },
+      { name: 'Mayúsculas', lang: 'ES-MX', localService: true },
+    ];
+    expect(vocesEspanolLocales(voces).map((v) => v.name)).toEqual(['Genérica', 'Mayúsculas']);
+    expect(elegirVoz(voces)?.name).toBe('Mayúsculas');
+  });
+});

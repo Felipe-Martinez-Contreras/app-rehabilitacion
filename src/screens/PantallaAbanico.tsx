@@ -22,7 +22,7 @@ import type { Sonido } from '../sound/useSonido';
 import { umbralesAbanico } from '../detection/umbrales';
 
 const INSTRUCCION_CALIBRACION = {
-  juntos: 'Con la mano extendida y la palma hacia la cámara, junta los dedos con suavidad.',
+  juntos: 'Cuando quieras, junta los dedos con suavidad, con la mano extendida y la palma hacia la cámara.',
   separados: 'Ahora sepáralos hasta donde te sea cómodo.',
 } as const;
 

@@ -9,6 +9,8 @@ App web terapéutica (Vite + React + TypeScript) que usa la cámara para reconoc
 - Tras la confirmación: commit con mensaje claro en español. El push lo hace la persona, nunca Claude.
 - No agregar funciones que no estén en la especificación sin preguntar.
 - Cambios mínimos: editar lo necesario, sin reescribir archivos completos.
+- La lógica que no depende del navegador en `src/sound/`, `src/guardado/` y `src/voz/` también va en funciones puras con su prueba.
+- Las decisiones tomadas con mediciones reales están resumidas en `docs/decisiones.md`: al tomar una nueva, agrégala ahí.
 - Cada función pura de `src/detection/` se crea junto con su prueba Vitest (`*.test.ts`) en el mismo hito, usando landmarks sintéticos (`src/detection/manoSintetica.ts`). Las pruebas son la forma de verificar la lógica, porque Claude no puede ver la cámara.
 
 ## Privacidad de la cámara (no negociable)
@@ -56,7 +58,7 @@ App web terapéutica (Vite + React + TypeScript) que usa la cámara para reconoc
 - Español neutro, tratando de tú. Invitaciones ("cuando quieras", "a tu ritmo", "puedes"), nunca órdenes. Sin urgencia, sin rojo, sin sonidos de error, sin gamificación que genere culpa.
 - Si la detección falla, la responsabilidad es de la app ("No alcanzo a ver tu mano"), nunca de la persona.
 - No diagnostica, no mide clínicamente y no promete curar. Los valores son referenciales.
-- Mensaje de derivación visible en todas las pantallas (con poca altura, versión compacta de una línea que abre "Privacidad y ayuda"): "Esta app acompaña tu rutina; no reemplaza a tu kinesiólogo/a ni a tu equipo de salud. Si sientes dolor, hormigueo o algo no se siente bien, detente y consulta."
+- Mensaje de derivación visible en todas las pantallas (si ocuparía más de un cuarto del alto de la ventana, versión compacta de una línea que abre "Privacidad y ayuda"): "Esta app acompaña tu rutina; no reemplaza a tu kinesiólogo/a ni a tu equipo de salud. Si sientes dolor, hormigueo o algo no se siente bien, detente y consulta."
 
 ## Accesibilidad (WCAG 2.2 AA)
 - `lang="es"`, HTML semántico (header, main, footer, un `h1` por pantalla que recibe el foco), `<button>` reales de al menos 48 × 48 px con texto visible.
@@ -67,5 +69,6 @@ App web terapéutica (Vite + React + TypeScript) que usa la cámara para reconoc
 
 ## Despliegue
 - Google Cloud Run con Docker; **no se usa Vercel**. `Dockerfile` multietapa (`node:22-alpine` → `nginx:alpine`), nginx en el puerto 8080 (`nginx.conf`).
+- Encabezados de seguridad en `seguridad.conf`, incluido en **cada** `location` de `nginx.conf` (un `add_header` dentro de un `location` anula los heredados): `Permissions-Policy` (`camera=(self)`, `microphone=()`), `X-Content-Type-Options`, `Referrer-Policy: no-referrer` y una CSP con `default-src 'self'`, `connect-src 'self'` y `script-src 'self' 'wasm-unsafe-eval'` (lo que MediaPipe necesita para WebAssembly). No relajar la CSP sin avisar: MediaPipe no usa workers, `blob:` ni `eval`, y los estilos de React no necesitan `'unsafe-inline'`.
 - Probar la imagen: `docker build -t app-rehabilitacion .` y `docker run --rm -p 8080:8080 app-rehabilitacion` → http://localhost:8080.
 - Desplegar: `gcloud run deploy --source . --allow-unauthenticated`.

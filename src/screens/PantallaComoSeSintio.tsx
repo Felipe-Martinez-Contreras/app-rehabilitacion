@@ -55,7 +55,7 @@ export function PantallaComoSeSintio({ onElegir, onSeguir }: Props) {
   return (
     <section className="pantalla">
       <Titulo>¿Cómo se sintió tu mano?</Titulo>
-      <p>Elige la opción que más se parezca a cómo te sentiste hoy.</p>
+      <p>Puedes elegir la opción que más se parezca a cómo te sentiste hoy.</p>
       <div className="opciones-sensacion">
         {OPCIONES.map(({ valor, texto, icono }) => (
           <button key={valor} type="button" className="boton boton--secundario boton--grande" onClick={() => elegir(valor)}>

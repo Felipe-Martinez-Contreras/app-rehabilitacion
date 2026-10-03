@@ -89,7 +89,7 @@ Construye desde cero una app web terapéutica de salud física para un seminario
   - "Abre la mano y separa los dedos hasta donde te sea cómodo".
   - "Ahora ciérrala con suavidad, hasta donde te sea cómodo".
 - Con la calibración:
-  - Guarda la apertura mínima y máxima y la separación máxima.
+  - Registra, solo en memoria durante la sesión, la apertura mínima y máxima y la separación máxima (ver §11: la calibración nunca se guarda).
   - Los umbrales de la flor y del abanico son porcentajes de ese rango personal (por ejemplo, en la flor: cerrada < 30 % y abierta > 70 %).
   - Usa siempre el rango calibrado de la persona, nunca valores fijos (los medidos en este documento son de una sola mano). Con la mano quieta la apertura varía 0,01–0,02, así que el rango mínimo aceptable es 0,15.
   - Si el rango queda bajo 0,15, invita con calma a repetir la calibración: "Puedes intentarlo de nuevo, sin forzar; buscamos tu movimiento cómodo de hoy". Si en el segundo intento sigue bajo 0,15, continúa con su rango ampliado a 0,15 alrededor de su punto medio y avisa que la flor será más sensible.
@@ -97,14 +97,14 @@ Construye desde cero una app web terapéutica de salud física para un seminario
   - Registra el signo de z de "palma de frente" mientras la persona muestra la palma, sin usar la etiqueta izquierda/derecha (cada mano tiene el signo contrario).
   - Registra también el |z| de palma que alcanza la persona. Quienes salen de un yeso de muñeca pueden tener limitado el giro: si |z| queda por debajo de 0,65, avísale con calma que puede acercar un poco la palma hacia la cámara, sin forzar el giro.
   - El filtro de toques relativo al rango calibrado debe cuidar a quienes tengan menos apertura (con 1,40 fijo, el margen mínimo medido fue 0,14).
-  - Se puede recalibrar desde Ajustes.
+  - Se puede recalibrar desde Ajustes durante la rutina; al terminar, se vuelve a "¿Todo listo?" del ejercicio que estaba en pausa.
 - Toda la lógica de detección y conteo va en funciones puras en `src/detection/` (sin DOM ni React), para probarla con landmarks sintéticos.
 - Panel de depuración solo con `?debug=1`: métricas en vivo, umbrales, estado actual y fps.
 
 ## 8. Flujo de pantallas
 Arriba, siempre: nombre de la app, "Fase X de 5" y controles rápidos (alto contraste, A− / A+, sonido, Ajustes).
 Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que abre un `<dialog>` accesible (cómo se usa la cámara, qué se guarda y cómo borrarlo, y la derivación).
-- Con poca altura de ventana (menos de ~32rem, por ejemplo con zoom al 200 %), el pie no sale de la pantalla: pasa a una versión compacta de una línea, "Si sientes dolor, detente y consulta · Más información", que abre el diálogo de Privacidad y ayuda con el mensaje completo.
+- Si el mensaje completo ocuparía más de un cuarto del alto de la ventana (por la pantalla, el zoom o el tamaño de texto), el pie no sale de la pantalla: pasa a una versión compacta de una línea, "Si sientes dolor, detente y consulta · Más información", que abre el diálogo de Privacidad y ayuda con el mensaje completo.
 
 1. Bienvenida: una frase de propósito, duración aproximada (unos 5 minutos), "Tu jardín" (una flor por cada rutina con al menos una repetición, que nunca se marchita) y botón "Comenzar".
    - Nace una flor siempre que se haya hecho al menos una repetición, tanto al llegar al cierre por el flujo normal como con "Terminar por hoy": quien termina por molestia está siguiendo la indicación de detenerse y no pierde su flor.
@@ -133,7 +133,7 @@ Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que a
     - Rango mínimo de separación de 0,10 (con los dedos quietos la separación varía 0,02–0,03, así que es de 3 a 5 veces el ruido), igual que con la apertura: si queda bajo el mínimo, invita con calma a repetir la minicalibración; si en el segundo intento sigue bajo, continúa con su rango ampliado al mínimo alrededor de su punto medio y avisa que el abanico será más sensible.
     - Solo cuenta con la apertura sobre el filtro y la palma de frente. La separación solo se evalúa dentro del abanico: al tocar el meñique sube hasta 0,62.
 11. ¿Cómo se sintió tu mano? (fase 5): tres botones grandes con ícono y texto: "Cómoda", "Con algo de esfuerzo" y "Sentí molestia". Con "Sentí molestia" aparece: "Gracias por contarlo. Coméntalo con tu kinesiólogo/a antes de tu próxima rutina."
-12. Cierre: mensaje final, resumen en texto de las repeticiones de cada ejercicio (solo las que se hicieron; un ejercicio saltado se muestra con un texto calmado, nunca como 0), botón "Escuchar la melodía de hoy", la flor nueva en el jardín, cámara apagada y botón "Volver al inicio".
+12. Cierre: mensaje final, resumen en texto de las repeticiones de cada ejercicio (solo las que se hicieron; un ejercicio saltado se muestra con un texto calmado, nunca como 0), botón "Escuchar la melodía de hoy", la flor nueva en el jardín (si hubo al menos una repetición), cámara apagada y botón "Volver al inicio".
 
 - Durante cada ejercicio están siempre visibles: el contador en texto ("3 de 5") con una barra de progreso accesible, "Detener" y "Saltar este ejercicio".
 - Intensidad en Ajustes:
@@ -152,7 +152,7 @@ Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que a
 - Botón de sonido sí/no siempre a mano, en el encabezado: texto fijo "Sonido" con `aria-pressed` (sin un texto que cambie con el estado, para que el lector de pantalla no anuncie algo contradictorio), y un ícono y un estilo que muestren el estado sin depender solo del color. Todo lo que comunica el sonido se comunica también con texto y con lo visual.
 - El sonido se silencia con un desvanecido corto al ocultar la pestaña y al pulsar "Detener"; se reanuda con el siguiente clic de la persona.
 - La lógica que no depende del navegador (qué nota toca cada evento, la curva del acorde y la compresión de la melodía) va en funciones puras en `src/sound/`, con pruebas Vitest.
-- Guía por voz opcional (apagada por defecto) con `speechSynthesis`, usando solo voces en español con `localService === true`. Si no hay ninguna, la opción no se muestra.
+- Guía por voz opcional (apagada por defecto) con `speechSynthesis`, usando solo voces en español con `localService === true`. Si no hay ninguna, la opción no se muestra. Lee el título y la instrucción de cada pantalla y los mismos avisos que la región `aria-live`; se calla al pulsar "Detener", al abrir Ajustes y al ocultar la pestaña. Es independiente del botón "Sonido", que controla las notas y la música.
 
 ## 10. Accesibilidad (WCAG 2.2 AA)
 - `<html lang="es">`.
@@ -183,6 +183,7 @@ Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que a
 - Abrir Ajustes durante la rutina pausa todo, como "Detener" (cámara apagada y sonido en silencio); al cerrar Ajustes se vuelve a la pausa para retomar. Un cambio de intensidad durante la rutina se aplica desde el siguiente ejercicio, sin alterar el conteo del actual.
 
 ## 12. Pruebas y entregables
+- Pruebas con Vitest para `src/sound/`, `src/guardado/` y `src/voz/` (notas, curva del acorde, compresión de la melodía, validación de ajustes y registro, jardín y elección de voz), con sus casos borde.
 - Pruebas con Vitest para `src/detection/` usando landmarks sintéticos:
   - toque con histéresis, sin dobles conteos al temblar cerca del umbral;
   - ciclos de abrir y cerrar;
@@ -194,8 +195,9 @@ Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que a
 - Despliegue en Google Cloud Run con Docker (no se usa Vercel):
   - `Dockerfile` multietapa: una etapa `node:22-alpine` que ejecuta `npm ci` y `npm run build` (el prebuild copia wasm) y una etapa nginx que sirve `dist/`. `.dockerignore` con node_modules, dist y .git.
   - nginx escucha en el puerto 8080, sirve `.wasm` como `application/wasm`, `index.html` sin caché y `assets/` con caché larga.
-  - Agrega en nginx los encabezados de seguridad: `Permissions-Policy` con `camera=(self)` y `microphone=()`, `X-Content-Type-Options: nosniff` y una Content-Security-Policy con `connect-src 'self'`. Verifica que la detección siga funcionando; si la CSP la rompe, avísame.
-- `README.md` en español: qué es, cómo instalar, cómo probar con cámara en localhost, cómo desplegar en Cloud Run con `gcloud run deploy --source . --allow-unauthenticated` (la cámara exige HTTPS), una sección "Privacidad" en lenguaje simple y los créditos de MediaPipe.
+  - Encabezados de seguridad en nginx (`seguridad.conf`, incluido en cada `location` porque un `add_header` dentro de un `location` anula los heredados): `Permissions-Policy: camera=(self), microphone=(), geolocation=()`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` y `Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`. `'wasm-unsafe-eval'` es lo que MediaPipe necesita para compilar su WebAssembly; no usa workers, `blob:` ni `eval`. Verifica que la detección siga funcionando; si la CSP la rompe, avísame antes de relajarla.
+- `README.md` en español: qué es, cómo instalar, cómo probar con cámara en localhost, cómo desplegar en Cloud Run con `gcloud run deploy --source . --allow-unauthenticated` (la cámara exige HTTPS), una sección "Privacidad" en lenguaje simple y los créditos de MediaPipe (Apache 2.0). Incluye los requisitos (Node 22.12 o superior; en Windows, Docker Desktop abierto antes de construir la imagen), cómo construir y probar la imagen de Docker, la advertencia sobre políticas de organización que pueden bloquear el acceso público y las advertencias conocidas de MediaPipe.
+- `docs/decisiones.md`: resumen de las decisiones tomadas con mediciones reales.
 - `CLAUDE.md` en la raíz con las reglas permanentes del proyecto: privacidad de la cámara, accesibilidad, tono, derivación, dependencias permitidas y cambios mínimos sin reescribir archivos completos.
 
 ## 13. Lista final de aceptación

@@ -138,3 +138,39 @@ describe('compresión de la melodía del día', () => {
     ]);
   });
 });
+
+describe('casos borde del sonido', () => {
+  it('una sola nota empieza en 0 y dura 0', () => {
+    const r = comprimirMelodia([nota(98765, SOL)]);
+    expect(r).toEqual([{ t: 0, frecuencia: SOL, timbre: 'nota' }]);
+    expect(duracionMelodia(r)).toBe(0);
+    expect(duracionMelodia([])).toBe(0);
+  });
+
+  it('dos notas en el mismo instante se conservan juntas', () => {
+    const r = comprimirMelodia([nota(500, DO), nota(500, MI), nota(900, SOL)]);
+    expect(r.map((n) => n.t)).toEqual([0, 0, 400]);
+  });
+
+  it('comprimir no modifica la melodía guardada (se puede escuchar más de una vez)', () => {
+    const original = [nota(3000, MI), nota(1000, DO)];
+    const copia = original.map((n) => ({ ...n }));
+    comprimirMelodia(original);
+    expect(original).toEqual(copia);
+  });
+
+  it('una melodía que dura justo 20 s no se escala', () => {
+    const notas = Array.from({ length: 21 }, (_, i) => nota(i * 1000));
+    expect(intervalos(comprimirMelodia(notas))).toEqual(Array(20).fill(1000));
+  });
+
+  it('la flor nunca toca una nota inválida: una repetición 0 o negativa suena como la primera', () => {
+    expect(notaFlor(0)).toBe(DO);
+    expect(notaFlor(-3)).toBe(DO);
+  });
+
+  it('esDo reconoce el Do en cualquier octava y ninguna otra nota', () => {
+    expect([DO / 2, DO, DO_AGUDO, CAMPANA].every(esDo)).toBe(true);
+    expect([RE, MI, FA, SOL, LA, SI].some(esDo)).toBe(false);
+  });
+});

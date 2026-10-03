@@ -208,19 +208,17 @@ p {
   margin: 0 auto;
 }
 
-.pie__compacto {
-  display: none;
-}
-
-/* Con poca altura (por ejemplo, zoom al 200 %): una sola línea que abre el mensaje completo. */
-@media (max-height: 32em) {
-  .pie__completo {
-    display: none;
-  }
-
-  .pie__compacto {
-    display: block;
-  }
+/*
+ * Si el mensaje completo ocuparía más de un cuarto del alto de la ventana (pantalla,
+ * zoom o tamaño de texto), el pie pasa a una línea que abre el mensaje completo.
+ * El completo queda invisible y fuera del flujo, solo para medir cuándo vuelve a caber.
+ */
+.pie--compacto .pie__completo {
+  position: absolute;
+  left: var(--espacio);
+  right: var(--espacio);
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* Botón con aspecto de enlace (abre un diálogo), con área de toque de 48 px. */
