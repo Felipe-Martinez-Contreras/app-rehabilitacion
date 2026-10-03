@@ -46,11 +46,16 @@ App web terapéutica (Vite + React + TypeScript) que usa la cámara para reconoc
 ## Consola
 - Advertencias conocidas aceptadas en la auditoría de "consola sin errores": las dos advertencias internas de MediaPipe (`vision_wasm_internal.js`) que aparecen al cargar el modelo: "OpenGL error checking is disabled" (informativa, del motor gráfico) y "landmark_projection_calculator.cc:81 Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI" (aparece con video no cuadrado; la detección funciona bien). No son errores de la app y no se corrigen si eso implica cambiar la detección.
 
+## Guardado local
+- Solo `localStorage` con try/catch y solo dos claves: `mqs:ajustes` (preferencias) y `mqs:registro` (por rutina: fecha AAAA-MM-DD, fases completadas, repeticiones y cómo se sintió).
+- La calibración nunca se guarda: se calibra en cada sesión ("Recalibrar" la repite dentro de la sesión). El rango cambia día a día y se acerca a un dato clínico.
+- Nace una flor en el jardín por cada rutina con al menos una repetición, también con "Terminar por hoy".
+
 ## Tono y derivación
 - Español neutro, tratando de tú. Invitaciones ("cuando quieras", "a tu ritmo", "puedes"), nunca órdenes. Sin urgencia, sin rojo, sin sonidos de error, sin gamificación que genere culpa.
 - Si la detección falla, la responsabilidad es de la app ("No alcanzo a ver tu mano"), nunca de la persona.
 - No diagnostica, no mide clínicamente y no promete curar. Los valores son referenciales.
-- Mensaje de derivación visible en todas las pantallas: "Esta app acompaña tu rutina; no reemplaza a tu kinesiólogo/a ni a tu equipo de salud. Si sientes dolor, hormigueo o algo no se siente bien, detente y consulta."
+- Mensaje de derivación visible en todas las pantallas (con poca altura, versión compacta de una línea que abre "Privacidad y ayuda"): "Esta app acompaña tu rutina; no reemplaza a tu kinesiólogo/a ni a tu equipo de salud. Si sientes dolor, hormigueo o algo no se siente bien, detente y consulta."
 
 ## Accesibilidad (WCAG 2.2 AA)
 - `lang="es"`, HTML semántico (header, main, footer, un `h1` por pantalla que recibe el foco), `<button>` reales de al menos 48 × 48 px con texto visible.

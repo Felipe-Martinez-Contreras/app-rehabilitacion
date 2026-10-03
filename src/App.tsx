@@ -4,6 +4,9 @@ import { useHandTracking, type AvisoMano } from './camera/useHandTracking';
 import { Abanico } from './components/Abanico';
 import { RegionAvisos, useAnunciador } from './components/Anunciador';
 import { BotonSonido } from './components/BotonSonido';
+import { ControlesRapidos, ESCALAS_TEXTO } from './components/ControlesRapidos';
+import { DialogoPrivacidad } from './components/DialogoPrivacidad';
+import { Pie } from './components/Pie';
 import { DisenoCamara } from './components/DisenoCamara';
 import { Flor } from './components/Flor';
 import { ManoPiano } from './components/ManoPiano';
@@ -88,8 +91,14 @@ const ANUNCIOS_AVISO: Partial<Record<AvisoMano, string>> = {
 
 const RESUMEN_INICIAL: Resumen = { flor: 0, piano: 0, abanico: 0 };
 
+/** Al inicio, el alto contraste respeta la preferencia del sistema (prefers-contrast: more). */
+const prefiereMasContraste = () => window.matchMedia?.('(prefers-contrast: more)').matches ?? false;
+
 export function App() {
   const [pantalla, setPantalla] = useState<Pantalla>('bienvenida');
+  const [altoContraste, setAltoContraste] = useState(prefiereMasContraste);
+  const [escalaTexto, setEscalaTexto] = useState(0);
+  const [privacidadAbierta, setPrivacidadAbierta] = useState(false);
   const [calibracion, setCalibracion] = useState<Calibracion | null>(null);
   const [rangoAbanico, setRangoAbanico] = useState<RangoSeparacion | null>(null);
   const [resumen, setResumen] = useState<Resumen>(RESUMEN_INICIAL);
@@ -107,6 +116,22 @@ export function App() {
   const { silenciar } = sonido;
   const conCamara = CON_CAMARA.has(pantalla);
   const enDescanso = pantalla === 'descanso-1' || pantalla === 'descanso-2';
+
+  // Alto contraste y tamaño de texto se aplican en la raíz: todo usa sus tokens y rem.
+  useEffect(() => {
+    const raiz = document.documentElement;
+    if (altoContraste) raiz.dataset.contraste = 'alto';
+    else delete raiz.dataset.contraste;
+  }, [altoContraste]);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--escala', String(ESCALAS_TEXTO[escalaTexto]));
+  }, [escalaTexto]);
+
+  const cambiarEscala = (indice: number) => {
+    setEscalaTexto(indice);
+    anunciar(`Texto al ${Math.round(ESCALAS_TEXTO[indice] * 100)} %`, true);
+  };
 
   // La calibración llega al seguimiento por ref: el bucle de la cámara la lee en cada fotograma.
   useEffect(() => {
@@ -278,9 +303,20 @@ export function App() {
   return (
     <div className="app">
       <header className="encabezado">
-        <p className="encabezado__nombre">Manos que Suenan</p>
-        {fase !== undefined && <p className="encabezado__fase">Fase {fase} de 5</p>}
-        <BotonSonido activado={sonido.activado} onCambiar={sonido.setActivado} />
+        <div className="encabezado__contenido">
+          <div className="encabezado__titulo">
+            <p className="encabezado__nombre">Manos que Suenan</p>
+            {fase !== undefined && <p className="encabezado__fase">Fase {fase} de 5</p>}
+          </div>
+          <ControlesRapidos
+            altoContraste={altoContraste}
+            onAltoContraste={setAltoContraste}
+            escala={escalaTexto}
+            onEscala={cambiarEscala}
+          >
+            <BotonSonido activado={sonido.activado} onCambiar={sonido.setActivado} />
+          </ControlesRapidos>
+        </div>
       </header>
 
       <main className="principal">
@@ -312,12 +348,8 @@ export function App() {
 
       <RegionAvisos anuncio={anuncio} />
 
-      <footer className="pie">
-        <p>
-          Esta app acompaña tu rutina; no reemplaza a tu kinesiólogo/a ni a tu equipo de salud. Si sientes dolor,
-          hormigueo o algo no se siente bien, detente y consulta.
-        </p>
-      </footer>
+      <Pie onAbrirPrivacidad={() => setPrivacidadAbierta(true)} />
+      <DialogoPrivacidad abierto={privacidadAbierta} onCerrar={() => setPrivacidadAbierta(false)} />
     </div>
   );
 }

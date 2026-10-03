@@ -11,7 +11,7 @@ export type Landmarks = readonly Punto3D[];
 /** Dedos que el pulgar puede tocar, en el orden del piano. */
 export type Dedo = 'indice' | 'medio' | 'anular' | 'menique';
 
-/** Rango cómodo medido en la calibración (solo números; se guarda en mqs:calibracion). */
+/** Rango cómodo medido en la calibración. Solo en memoria durante la sesión: nunca se guarda. */
 export interface Calibracion {
   aperturaMin: number;
   aperturaMax: number;

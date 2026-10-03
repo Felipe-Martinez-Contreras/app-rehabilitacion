@@ -45,7 +45,8 @@ export function AccionesEjercicio({ completo, onSeguir, onDetener, onSaltar }: A
 function useEscDetener(onDetener: () => void) {
   useEffect(() => {
     const alPulsar = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onDetener();
+      // Con un diálogo abierto (Privacidad y ayuda), Esc solo lo cierra.
+      if (e.key === 'Escape' && !document.querySelector('dialog[open]')) onDetener();
     };
     document.addEventListener('keydown', alPulsar);
     return () => document.removeEventListener('keydown', alPulsar);

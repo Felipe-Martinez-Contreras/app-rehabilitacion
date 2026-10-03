@@ -103,9 +103,11 @@ Construye desde cero una app web terapéutica de salud física para un seminario
 
 ## 8. Flujo de pantallas
 Arriba, siempre: nombre de la app, "Fase X de 5" y controles rápidos (alto contraste, A− / A+, sonido, Ajustes).
-Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que abre un `<dialog>` accesible (cómo se usa la cámara, qué se guarda y cómo borrarlo).
+Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que abre un `<dialog>` accesible (cómo se usa la cámara, qué se guarda y cómo borrarlo, y la derivación).
+- Con poca altura de ventana (menos de ~32rem, por ejemplo con zoom al 200 %), el pie no sale de la pantalla: pasa a una versión compacta de una línea, "Si sientes dolor, detente y consulta · Más información", que abre el diálogo de Privacidad y ayuda con el mensaje completo.
 
-1. Bienvenida: una frase de propósito, duración aproximada (unos 5 minutos), "Tu jardín" (una flor por cada rutina completada, que nunca se marchita) y botón "Comenzar".
+1. Bienvenida: una frase de propósito, duración aproximada (unos 5 minutos), "Tu jardín" (una flor por cada rutina con al menos una repetición, que nunca se marchita) y botón "Comenzar".
+   - Nace una flor siempre que se haya hecho al menos una repetición, tanto al llegar al cierre por el flujo normal como con "Terminar por hoy": quien termina por molestia está siguiendo la indicación de detenerse y no pierde su flor.
 2. Tu cámara: explicación de privacidad, consejos de encuadre (luz de frente, mano a 40–60 cm, palma hacia la cámara) y botón "Activar cámara".
 3. Te veo: vista de cámara con el esqueleto. Cuando detecta la mano de forma estable (~1 s): "Te veo. Cuando quieras, seguimos."
 4. Rango cómodo: la calibración.
@@ -174,10 +176,11 @@ Abajo, siempre: el mensaje de derivación y un enlace "Privacidad y ayuda" que a
 ## 11. Guardado local
 - Solo `localStorage` (siempre con try/catch), con estas claves:
   - `mqs:ajustes`: sonido, voz, alto contraste, tamaño de texto, intensidad, inicio con gesto y ver imagen o solo trazo.
-  - `mqs:calibracion`: los valores numéricos del rango cómodo.
   - `mqs:registro`: por sesión, solo la fecha (AAAA-MM-DD), las fases completadas, las repeticiones y cómo se sintió.
 - Nunca imágenes, landmarks, nombres ni otros datos personales. La app no pide nombre ni correo.
-- En Ajustes: "Recalibrar" y "Borrar mi registro" (con confirmación; también reinicia el jardín).
+- La calibración no se guarda: se hace en cada sesión y vive solo en memoria. El rango cambia día a día en rehabilitación (usar el de un día bueno en un día rígido haría que la flor no cuente) y el rango de movimiento se acerca a un dato clínico, que no se guarda.
+- En Ajustes: "Recalibrar" (repite la calibración dentro de la sesión) y "Borrar mi registro" (con confirmación; también reinicia el jardín).
+- Abrir Ajustes durante la rutina pausa todo, como "Detener" (cámara apagada y sonido en silencio); al cerrar Ajustes se vuelve a la pausa para retomar. Un cambio de intensidad durante la rutina se aplica desde el siguiente ejercicio, sin alterar el conteo del actual.
 
 ## 12. Pruebas y entregables
 - Pruebas con Vitest para `src/detection/` usando landmarks sintéticos:

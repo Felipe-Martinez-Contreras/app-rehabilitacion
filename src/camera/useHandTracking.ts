@@ -84,13 +84,26 @@ function crearDatosDepuracion(): DatosDepuracion {
   };
 }
 
+/**
+ * Colores del trazo según el modo (normal, alto contraste o colores forzados).
+ * Se resuelven con un elemento de prueba para obtener siempre un color que el
+ * canvas entienda, también cuando el valor es un color del sistema (Highlight, Canvas…).
+ */
 function leerColores(elemento: Element): ColoresTrazo {
-  const estilos = getComputedStyle(elemento);
-  return {
-    linea: estilos.getPropertyValue('--trazo-linea').trim() || '#8B7FC7',
-    contorno: estilos.getPropertyValue('--trazo-contorno').trim() || '#FFFFFF',
-    punto: estilos.getPropertyValue('--trazo-punto').trim() || '#F2B89B',
+  const prueba = document.createElement('span');
+  prueba.hidden = true;
+  elemento.parentElement?.appendChild(prueba);
+  const resolver = (variable: string, porDefecto: string) => {
+    prueba.style.color = `var(${variable}, ${porDefecto})`;
+    return getComputedStyle(prueba).color || porDefecto;
   };
+  const colores = {
+    linea: resolver('--trazo-linea', '#8B7FC7'),
+    contorno: resolver('--trazo-contorno', '#FFFFFF'),
+    punto: resolver('--trazo-punto', '#F2B89B'),
+  };
+  prueba.remove();
+  return colores;
 }
 
 export function useHandTracking(
@@ -145,7 +158,15 @@ export function useHandTracking(
     const ctx = canvas?.getContext('2d');
     if (!activo || !detector || !video || !canvas || !ctx) return;
 
-    const colores = leerColores(canvas);
+    let colores = leerColores(canvas);
+    // Al cambiar el alto contraste o los colores forzados, el trazo relee sus colores.
+    const releerColores = () => {
+      colores = leerColores(canvas);
+    };
+    const observador = new MutationObserver(releerColores);
+    observador.observe(document.documentElement, { attributes: true, attributeFilter: ['data-contraste'] });
+    const coloresForzados = window.matchMedia('(forced-colors: active)');
+    coloresForzados.addEventListener('change', releerColores);
     const datos = depuracion.current;
     let raf = 0;
     let ocupado = false;
@@ -228,6 +249,8 @@ export function useHandTracking(
 
     return () => {
       cancelAnimationFrame(raf);
+      observador.disconnect();
+      coloresForzados.removeEventListener('change', releerColores);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       datos.manoDetectada = false;
       datos.lista = false;

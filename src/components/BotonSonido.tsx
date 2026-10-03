@@ -10,7 +10,7 @@ interface Props {
  */
 export function BotonSonido({ activado, onCambiar }: Props) {
   return (
-    <button type="button" className="boton boton--secundario boton-sonido" aria-pressed={activado} onClick={() => onCambiar(!activado)}>
+    <button type="button" className="boton boton--secundario boton-alternar" aria-pressed={activado} onClick={() => onCambiar(!activado)}>
       <svg className="boton__icono" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z" />
         {activado ? <path d="M15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11" /> : <path d="M15.5 9.5l5 5M20.5 9.5l-5 5" />}

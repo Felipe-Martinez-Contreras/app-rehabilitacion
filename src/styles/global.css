@@ -1,8 +1,14 @@
 /*
- * Paleta (contraste medido sobre el fondo crema #FAF7F2):
- *   texto carbón #2B2D42 → 12,6:1 · salvia #3F6B5A → 5,7:1 (texto blanco sobre salvia 6,1:1)
- *   lavanda #8B7FC7 → 3,3:1: solo bordes, íconos y trazos; para texto se usa #6B5FAF (5,1:1)
- *   durazno #F2B89B → 1,6:1: solo relleno decorativo, con borde #C4704A (3,4:1)
+ * Paleta normal (contraste medido; texto ≥ 4,5:1, bordes e íconos ≥ 3:1):
+ *   texto carbón #2B2D42: 12,6:1 sobre crema #FAF7F2 · 13,5:1 sobre blanco · 7,8:1 sobre durazno
+ *   texto suave #4A4C63: 7,8:1 sobre crema · salvia #3F6B5A como texto: 5,7:1 sobre crema
+ *   texto blanco sobre salvia: 6,1:1 (hover #335849: 8,0:1)
+ *   lavanda #8B7FC7: 3,3:1, solo bordes, íconos y trazos; como texto se usa #6B5FAF (5,1:1)
+ *   durazno #F2B89B: solo relleno, con borde #C4704A (3,4:1) · bordes grises #8A8C9E: 3,1:1
+ *   foco carbón: 12,6:1 sobre crema
+ * Alto contraste: fondo negro, texto blanco (21:1) y acentos amarillos #FFD400 (14,7:1);
+ *   botones amarillos con texto negro (14,7:1; hover #FFE45C: 16,5:1); foco amarillo (14,7:1).
+ * El tamaño del texto se multiplica por --escala (A− / A+, de 1 a 1,5): todo está en rem.
  */
 :root {
   --fondo: #faf7f2;
@@ -16,6 +22,8 @@
   --acento-texto: #6b5faf;
   --flor: #f2b89b;
   --flor-borde: #c4704a;
+  /** Texto sobre el relleno de la flor (tecla encendida). */
+  --sobre-flor: #2b2d42;
   --borde: #8a8c9e;
   --foco: #2b2d42;
 
@@ -26,18 +34,56 @@
   --radio: 0.75rem;
   --espacio: 1rem;
 
+  --escala: 1;
+
   color-scheme: light;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-size: 100%;
+  font-size: calc(100% * var(--escala));
   line-height: 1.5;
   color: var(--texto);
   background: var(--fondo);
+}
+
+/* En pantallas grandes, letra base algo mayor (18 px al 100 %). */
+@media (min-width: 64em) {
+  :root {
+    font-size: calc(112.5% * var(--escala));
+  }
+}
+
+/* Alto contraste: fondo negro, texto blanco y acentos amarillos, también en el trazo sobre la cámara. */
+:root[data-contraste='alto'] {
+  --fondo: #000000;
+  --superficie: #000000;
+  --texto: #ffffff;
+  --texto-suave: #ffffff;
+  --primario: #ffd400;
+  --primario-hover: #ffe45c;
+  --sobre-primario: #000000;
+  --acento: #ffd400;
+  --acento-texto: #ffd400;
+  --flor: #ffd400;
+  --flor-borde: #ffffff;
+  --sobre-flor: #000000;
+  --borde: #ffffff;
+  --foco: #ffd400;
+
+  --trazo-linea: #ffd400;
+  --trazo-contorno: #000000;
+  --trazo-punto: #ffffff;
+
+  color-scheme: dark;
 }
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+html {
+  /* Que el pie fijo nunca tape el elemento con foco (WCAG 2.4.11). */
+  scroll-padding-bottom: calc(var(--alto-pie, 6rem) + 1rem);
 }
 
 body {
@@ -88,13 +134,35 @@ p {
 }
 
 .encabezado {
+  padding: 0.75rem var(--espacio);
+  border-bottom: 1px solid var(--borde);
+}
+
+.encabezado__contenido {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem 1rem;
-  padding: 0.75rem var(--espacio);
-  border-bottom: 1px solid var(--borde);
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.encabezado__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 1rem;
+}
+
+.encabezado__controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.encabezado__controles .boton {
+  padding: 0.5rem 0.875rem;
 }
 
 .encabezado p {
@@ -114,23 +182,61 @@ p {
 .principal {
   flex: 1;
   width: 100%;
-  max-width: 60rem;
+  max-width: 72rem;
   margin: 0 auto;
   padding: var(--espacio);
 }
 
+/* Pantallas de solo texto: un ancho de línea cómodo de leer, centrado. */
+.principal > .pantalla {
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+/* Pie con la derivación: siempre visible. */
 .pie {
   position: sticky;
   bottom: 0;
-  padding: 0.5rem var(--espacio);
+  padding: 0.25rem var(--espacio);
   background: var(--superficie);
   border-top: 1px solid var(--borde);
   font-size: 0.875rem;
 }
 
 .pie p {
-  max-width: 60rem;
+  max-width: 72rem;
   margin: 0 auto;
+}
+
+.pie__compacto {
+  display: none;
+}
+
+/* Con poca altura (por ejemplo, zoom al 200 %): una sola línea que abre el mensaje completo. */
+@media (max-height: 32em) {
+  .pie__completo {
+    display: none;
+  }
+
+  .pie__compacto {
+    display: block;
+  }
+}
+
+/* Botón con aspecto de enlace (abre un diálogo), con área de toque de 48 px. */
+.enlace {
+  display: inline-flex;
+  align-items: center;
+  min-height: 3rem;
+  padding: 0 0.25rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--primario);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 /* Pantallas */
@@ -345,7 +451,8 @@ p {
 }
 
 .anillo__fondo {
-  stroke: var(--fondo);
+  stroke: var(--borde);
+  stroke-opacity: 0.35;
 }
 
 .anillo__avance {
@@ -473,6 +580,7 @@ p {
 }
 
 .tecla--encendida {
+  color: var(--sobre-flor);
   background: var(--flor);
   border-color: var(--flor-borde);
   border-width: 4px;
@@ -558,25 +666,53 @@ p {
   margin: 0;
 }
 
-/* Botón de sonido: texto fijo con aria-pressed. El estado se ve en el ícono (ondas o tachado) y en el relleno. */
-.boton-sonido {
+/*
+ * Botones de alternancia ("Alto contraste", "Sonido"): texto fijo con aria-pressed.
+ * El estado se ve en el ícono y en el relleno (sólido o borde punteado), no solo en el color.
+ */
+.boton-alternar {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
 }
 
-.boton-sonido[aria-pressed='true'] {
+.boton-alternar[aria-pressed='true'] {
   color: var(--sobre-primario);
   background: var(--primario);
 }
 
-.boton-sonido[aria-pressed='true']:hover {
+.boton-alternar[aria-pressed='true']:hover {
   background: var(--primario-hover);
 }
 
-.boton-sonido[aria-pressed='false'] {
+.boton-alternar[aria-pressed='false'] {
   border-style: dashed;
+}
+
+/* A− / A+ en su límite: siguen enfocables (aria-disabled), pero se ven inactivos. */
+.boton[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Diálogo "Privacidad y ayuda" */
+.dialogo {
+  width: min(42rem, calc(100% - 2rem));
+  max-height: calc(100% - 2rem);
+  padding: 1.25rem 1.5rem;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 2px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.dialogo::backdrop {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.dialogo h3 {
+  font-size: 1.0625rem;
+  margin: 1.25rem 0 0.5rem;
 }
 
 /* Melodía del día */
@@ -651,5 +787,62 @@ p {
     100% {
       transform: scale(1);
     }
+  }
+}
+
+/*
+ * Colores forzados (por ejemplo, Contraste alto de Windows): el sistema elige los
+ * colores; los SVG y el trazo usan colores del sistema para seguir viéndose.
+ */
+@media (forced-colors: active) {
+  :root {
+    --trazo-linea: Highlight;
+    --trazo-contorno: Canvas;
+    --trazo-punto: CanvasText;
+  }
+
+  .flor__petalo,
+  .mano-piano__palma,
+  .mano-piano__dedo,
+  .abanico__varilla {
+    fill: Canvas;
+    stroke: CanvasText;
+  }
+
+  .flor__petalo--encendido,
+  .mano-piano__dedo--destacado,
+  .flor__centro,
+  .abanico__eje {
+    fill: Highlight;
+    stroke: CanvasText;
+  }
+
+  .mano-piano__anillo,
+  .anillo__avance {
+    stroke: Highlight;
+  }
+
+  .anillo__fondo {
+    stroke: CanvasText;
+  }
+
+  .indicador-camara__icono {
+    fill: CanvasText;
+  }
+
+  .tecla--encendida {
+    color: HighlightText;
+    background: Highlight;
+    forced-color-adjust: none;
+  }
+
+  .boton-alternar[aria-pressed='true'] {
+    color: HighlightText;
+    background: Highlight;
+    forced-color-adjust: none;
+  }
+
+  .boton__icono {
+    stroke: currentColor;
   }
 }
